@@ -100,6 +100,15 @@ PIC18F458  = 0x0860
 
 
 
+#PIC18 Familly
+
+PIC18FXXX   = 1
+PIC18FXXXX  = 2
+PIC18FXXKXX = 3
+
+
+
+
 # command definition
 C_PIC18_NOP	      = 0b0000
 C_PIC18_INSTRUCTION   = 0b0000
@@ -226,7 +235,7 @@ def ReadMemoryPic18(MemoryAddress):
   LoadMemoryAddress(MemoryAddress)
   return ReadMemoryPic18Next()
 
-def BulkErasePic18():
+def BulkErasePic18FXXX():
   print "Bulk Erase ",
   LoadCode(0x8EA6)
   LoadCode(0x8CA6)
@@ -380,8 +389,56 @@ def ProgramDumpPic18(program_size):
      if (l % 32) == 31:
       print " "
 
+def  DataEepromBurnPic18(PicData, DataEepromBase, DataEepromSize):
+   print "EEROM Programing not implemented yet"
+   return
+
+def DataEepromCheckPic18(PicData, DataEepromBase, DataEepromSize):
+   print "EEROM Programing Check not implemented yet"
+   return True
+
+def IDLocationBurnPic18(PicData,IDLocationBase,IDLocationSize):
+   print "ID  Programing not implemented yet"
+   return
+
+def IDLocationCheckPic18(PicData,IDLocationBase,IDLocationSize):
+   print "ID Programing Check implemented yet"
+   return True
+
+def ConfigBurnPic18(PicData, ConfigBase, ConfigSize):
+   print "CONFIG  Programing not implemented yet"
+   return
+
+def ConfigCheckPic18(PicData, ConfigBase, ConfigSize):
+   print "CONFIG Programing Check not implemented yet"
+   return True
 
 
+
+
+
+
+
+
+
+#///  GENERIC FUNCTION
+
+def  BulkErasePic18():
+  global PicFamilly
+  if PicFamilly == PIC18FXXX:
+    BulkErasePic18FXXX()
+#  elif PicFamilly == PIC18FXXXX:
+#  else:
+
+
+
+def   ProgramBurnPic18(PicData,ProgramBase,ProgramSize):
+  global PicFamilly
+  if PicFamilly == PIC18FXXX:
+    ProgramBurnPic18MultiPanel(PicData,ProgramBase,ProgramSize,8)
+#  elif PicFamilly == PIC18FXXXX:
+#    ProgramBurnPic18F25580:
+#  else:
 
 
 #=============  main ==========
@@ -428,20 +485,33 @@ CpuRevision = CpuRevision & 0x1f
 print "Cpu Id =" , hex(CpuId)
 print "Revision=" , hex(CpuRevision)
 
-DataBase = 0xf00000
+DataEepromBase = 0xf00000
+DataEepromSize = 256
 ProgramBase = 0
 ProgramSize = 32768
+IDLocationBase = 0x200000
+IDLocationSize = 8
+ConfigBase = 0x300000
+ConfigSize = 14
 WriteBufferSize = 8
 if CpuId != 0x840 :
    print " not a pic18f258"
    quit()
 
+PicFamilly = PIC18FXXX
+
+
 BulkErasePic18()
-#ProgramErasePic18(ProgramSize)
 if ProgramBlankCheckPic18(ProgramSize):
-  ProgramBurnPic18MultiPanel(PicData,ProgramBase,ProgramSize,8)
+  ProgramBurnPic18(PicData,ProgramBase,ProgramSize)
   if ProgramCheckPic18(PicData,ProgramBase,ProgramSize):
-    print "Program code verification passed!"
+    DataEepromBurnPic18(PicData, DataEepromBase, DataEepromSize)
+    if DataEepromCheckPic18(PicData, DataEepromBase, DataEepromSize):
+      IDLocationBurnPic18(PicData,IDLocationBase,IDLocationSize)
+      if IDLocationCheckPic18(PicData,IDLocationBase,IDLocationSize):
+        ConfigBurnPic18(PicData, ConfigBase, ConfigSize)
+        if ConfigCheckPic18(PicData, ConfigBase, ConfigSize):
+          print "Program verification passed!"
 
 #debug dump function
 #ProgramDumpPic18(0x400)
