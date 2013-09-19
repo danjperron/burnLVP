@@ -12,6 +12,6 @@ The Python code
 
 Schematic
  
-   - RpiPgm.png     Original  schematic to program PIC12F1840 via Raspberry Pi GPIO .
+   - RpiPgm.png      Original  schematic to program PIC12F1840 via Raspberry Pi GPIO .
 
  
