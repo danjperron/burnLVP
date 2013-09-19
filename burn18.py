@@ -1,0 +1,456 @@
+#!/usr/bin/env python
+
+################################
+#
+# burn18LVP.py  
+#
+#
+# Program to burn pic18F...using LVP mode with a Rasberry Pi
+#
+#
+# programmer : Daniel Perron
+# Date       : Sept 17, 2013
+# Version    : 0.001
+#
+# Enhanced version of  burnLVP  for pic18F...
+#
+# source code:  https://github.com/danjperron/A2D_PIC_RPI
+#
+#
+#
+#  18 Sept. update   
+#                   Bulk Erase works with adafruit level converter if power is 4.5 V
+#                   Code erase function working
+#                   Code blank check working
+#                   Code programming multi-Panel working
+#                   Code check working
+#
+#  Left To do:
+#                   Add EEROM DATA programming and checking
+#                   Add config programming and checking
+#
+#                   Add pic18Fxxx2 pic18Fxxx8 familly
+#                   Add pic18Fxxk80 familly
+
+
+#////////////////////////////////////  MIT LICENSE ///////////////////////////////////
+#	The MIT License (MIT)
+#
+#	Copyright (c) 2013 Daniel Perron
+#
+#	Permission is hereby granted, free of charge, to any person obtaining a copy of
+#	this software and associated documentation files (the "Software"), to deal in
+#	the Software without restriction, including without limitation the rights to
+#	use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+#	the Software, and to permit persons to whom the Software is furnished to do so,
+#	subject to the following conditions:
+#
+#	The above copyright notice and this permission notice shall be included in all
+#	copies or substantial portions of the Software.
+#
+#	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+#	FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+#	COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+#	IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+#	CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+
+from time import sleep
+import RPi.GPIO as GPIO
+import sys, termios, atexit
+from intelhex import IntelHex
+from select import select   
+
+
+
+# some constant
+
+Pic18PanelSize = 0x2000
+
+
+
+#set io pin
+
+#CLK GPIO 4 
+PIC_CLK = 7
+
+#DATA GPIO 8
+PIC_DATA = 24
+
+#MCLR GPIO 9
+PIC_MCLR = 21
+
+#PGM_GPIO 
+PIC_PGM  = 26
+
+
+
+#compatible PIC id
+
+PIC18F242  = 0x0480
+PIC18F248  = 0x0800
+PIC18F252  = 0x0400
+PIC18F258  = 0x0840
+PIC18F442  = 0x04A0
+PIC18F448  = 0x0820
+PIC18F452  = 0x0420
+PIC18F458  = 0x0860
+
+
+
+# command definition
+C_PIC18_NOP	      = 0b0000
+C_PIC18_INSTRUCTION   = 0b0000
+C_PIC18_TABLAT 	      = 0b0010
+C_PIC18_READ          = 0b1000
+C_PIC18_READ_INC      = 0b1001
+C_PIC18_READ_DEC      = 0b1010
+C_PIC18_READ_PRE_INC  = 0b1011
+C_PIC18_WRITE         = 0b1100
+C_PIC18_WRITE_INC_BY2 = 0b1101
+C_PIC18_WRITE_DEC_BY2 = 0b1110
+C_PIC18_START_PGM     = 0b1111
+
+
+def mydelay():
+#   pass
+   return
+
+def Set_LVP_PIC18():
+   #held MCLR LOW
+   GPIO.setup(PIC_MCLR,GPIO.OUT)
+   GPIO.output(PIC_MCLR,False)
+
+   #hdel PIC_CLK & PIC_DATA & PIC_PGM low
+   GPIO.setup(PIC_CLK, GPIO.OUT)
+   GPIO.output(PIC_CLK, False)
+   GPIO.setup(PIC_DATA , GPIO.OUT)
+   GPIO.output(PIC_DATA, False)
+   GPIO.setup(PIC_PGM, GPIO.OUT)
+   GPIO.output(PIC_PGM, False)
+
+   sleep(0.01)
+   #set PGM High
+   GPIO.output(PIC_PGM, True)
+   sleep(0.01)
+   #Set MCLR High
+   GPIO.output(PIC_MCLR, True)
+   sleep(0.01)
+
+
+def Release_LVP_PIC18():
+   #set PGM Low
+   GPIO.output(PIC_PGM, False)
+   sleep(0.1)
+
+   #held MCLR LOW
+   GPIO.setup(PIC_MCLR,GPIO.OUT)
+   GPIO.output(PIC_MCLR,False)
+
+   #PIC_CLK & PIC_DATA has input
+   GPIO.setup(PIC_CLK, GPIO.IN)
+   GPIO.setup(PIC_DATA , GPIO.IN)
+
+   sleep(0.1)
+   #Set MCLR High
+   GPIO.output(PIC_MCLR, True)
+
+
+def LoadWordPic18(Value):
+  GPIO.setup(PIC_DATA,GPIO.OUT)
+  for loop in range(16):
+     GPIO.output(PIC_DATA,(Value & 1)==1)
+     GPIO.output(PIC_CLK,True)
+     #mydelay()
+     GPIO.output(PIC_CLK,False)
+     #mydelay()
+     Value = Value >> 1;
+
+def ReadDataPic18():
+  GPIO.setup(PIC_DATA,GPIO.IN)
+  for loop in range(8):
+    GPIO.output(PIC_CLK,True)
+    #mydelay()
+    GPIO.output(PIC_CLK,False)
+    #mydelay()
+  Value = 0
+  for loop in range(8):
+    GPIO.output(PIC_CLK,True)
+    #mydelay()
+    #mydelay()
+    if GPIO.input(PIC_DATA):
+        Value =  Value | (1 << loop)
+    GPIO.output(PIC_CLK,False)
+    #mydelay()
+  return Value
+
+def LoadCommandPic18(Value):
+
+  GPIO.setup(PIC_DATA,GPIO.OUT)
+  for loop in range(4):
+     GPIO.output(PIC_DATA,(Value & 1)==1)
+     GPIO.output(PIC_CLK,True)
+     #mydelay()
+     GPIO.output(PIC_CLK,False)
+     #mydelay()
+     Value = Value >> 1;
+
+def LoadCommandWordPic18(CommandValue,WordValue):
+  LoadCommandPic18(CommandValue)
+  LoadWordPic18(WordValue)
+
+
+def LoadCode(Instruction):
+  LoadCommandWordPic18(C_PIC18_INSTRUCTION,Instruction)
+
+
+def ReadMemoryPic18Next():
+  LoadCommandPic18(C_PIC18_READ_INC)
+  return ReadDataPic18()
+
+
+def LoadMemoryAddress(MemoryAddress):
+  LoadCode(0x0E00 | ((MemoryAddress >> 16) & 0xff))
+  LoadCode(0x6EF8)
+  LoadCode(0x0E00 | ((MemoryAddress >> 8) & 0xff))
+  LoadCode(0x6EF7)
+  LoadCode(0x0E00 | (MemoryAddress & 0xff))
+  LoadCode(0x6EF6)
+ 
+
+
+
+def ReadMemoryPic18(MemoryAddress):
+  LoadMemoryAddress(MemoryAddress)
+  return ReadMemoryPic18Next()
+
+def BulkErasePic18():
+  print "Bulk Erase ",
+  LoadCode(0x8EA6)
+  LoadCode(0x8CA6)
+  LoadCode(0x86A6)
+  LoadMemoryAddress(0x3C0004)
+  LoadCommandWordPic18(C_PIC18_WRITE,0x0080)
+  LoadCode(0)
+  LoadCommandPic18(C_PIC18_NOP)
+  sleep(0.015)
+  LoadWordPic18(0)
+  print "..... Done!"  
+
+def WriteDataPic18(DataToBurn):
+  LoadCommandWordPic18(C_PIC18_START_PGM,DataToBurn)
+
+
+
+
+def WriteAndWait():
+  GPIO.setup(PIC_DATA,GPIO.OUT)
+  GPIO.output(PIC_DATA, False)
+  for loop in range(3):
+     GPIO.output(PIC_CLK,True)
+     #mydelay()
+     GPIO.output(PIC_CLK,False)
+     #mydelay()
+  GPIO.output(PIC_CLK,True)
+  sleep(0.001)
+  GPIO.output(PIC_CLK,False)
+  LoadWordPic18(0)
+
+
+#validate search data in hex file dictionary. If it is not there assume blank (0xff)
+def SearchByteValue(pic_data, AddressPointer):
+  if pic_data.get(AddressPointer) != None:
+    return pic_data.get(AddressPointer)
+  else:
+    return 0xff
+
+def SearchWordValue(pic_data, AddressPointer):
+  return (SearchByteValue(pic_data, AddressPointer) | (SearchByteValue(pic_data,AddressPointer+1) << 8))
+
+
+def ProgramBurnPic18MultiPanel(pic_data, program_base, program_size,buffer_size):
+  print "Writing Program",
+  NumberOfPanel = program_size / Pic18PanelSize 
+  LoadCode(0x8EA6)
+  LoadCode(0x8CA6)
+  LoadCode(0x86A6)
+  WaitFlag= False
+  for CountIdx in range(0,Pic18PanelSize,buffer_size):
+    LoadMemoryAddress(0x3C0006)
+    LoadCommandWordPic18(C_PIC18_WRITE,0x0040)
+
+    LoadCode(0x8EA6)
+    LoadCode(0x9CA6)
+
+    for PanelIdx in range(NumberOfPanel):
+     AddressOffset = CountIdx + (PanelIdx * Pic18PanelSize)
+     LoadMemoryAddress(AddressOffset)  
+     for DataWordIdx in range(0,buffer_size,2):
+       if DataWordIdx == 6 :
+         if PanelIdx == (NumberOfPanel -1):
+           WaitFlag= True
+           LoadCommandPic18(C_PIC18_START_PGM)
+         else:
+           LoadCommandPic18(C_PIC18_WRITE)
+       else:
+         LoadCommandPic18(C_PIC18_WRITE_INC_BY2)
+       PAddress = AddressOffset + DataWordIdx  + program_base;
+       LoadWordPic18(SearchWordValue(pic_data,PAddress))
+       if WaitFlag:
+         WriteAndWait()
+         WaitFlag= False;
+    if (CountIdx % 256)==0 :
+      sys.stdout.write('.')
+      sys.stdout.flush()
+  print "Done!"
+
+
+def ProgramErasePic18(program_size):
+  print "row erase"
+  #direct access to config memory
+  LoadCode(0x8EA6)
+  LoadCode(0x8CA6)
+  LoadCode(0x86A6)
+
+  #config device for multi panel
+  LoadMemoryAddress(0x3C0006)
+  LoadCommandWordPic18(C_PIC18_WRITE,0x40)
+
+
+  for l in range(0,program_size,64):
+    #direct access code memory mode
+    LoadCode(0x8EA6)
+    LoadCode(0x9CA6)
+    LoadCode(0x88A6)
+
+    LoadMemoryAddress(l)
+    LoadCommandWordPic18(C_PIC18_START_PGM,0xffff)
+    WriteAndWait()
+    if (l % 1024)==0 :
+      sys.stdout.write('.')
+      sys.stdout.flush()
+  print "Done!"
+
+def ProgramBlankCheckPic18(program_size):
+   print "Program code blank check",
+   LoadMemoryAddress(0)
+   for l in range (program_size):
+     Value = ReadMemoryPic18Next()
+     if(Value != 0xff):
+       print "*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!"
+       return False
+     if (l % 1024)==0 :
+       sys.stdout.write('.')
+       sys.stdout.flush()
+   print "Passed!"
+   return True
+     
+def ProgramCheckPic18(pic_data, program_base, program_size):     
+   print "Program check ",
+   LoadCode(0)
+   LoadMemoryAddress(0)
+   for l in range (program_size):
+     Value = ReadMemoryPic18Next()
+     TargetValue = SearchByteValue(pic_data,l + program_base)
+     if(Value != TargetValue):
+       print "Program address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value)
+       return False
+     if (l % 1024)==0 :
+       sys.stdout.write('.')
+       sys.stdout.flush()
+   print "Passed!"
+   return True  
+
+       
+
+def ProgramDumpPic18(program_size):
+   LoadCode(0)
+   LoadMemoryAddress(0)
+   for l in range (program_size):
+     LoadMemoryAddress(l)
+     Value = ReadMemoryPic18Next()
+     if (l % 32) == 0:
+      print format(l,'04x'), ":" ,
+     else:
+       if (l % 4) == 0:
+         print "-",
+     print format(Value,'02X'),
+     if (l % 32) == 31:
+      print " "
+
+
+
+
+
+#=============  main ==========
+
+if __name__ == '__main__':
+  if len(sys.argv) is 2:
+    HexFile = sys.argv[1]
+  elif len(sys.argv) is 1:
+    HexFile = ''
+  else:
+    print 'Usage: %s file.hex' % sys.argv[0]
+    quit()
+
+
+## load hex file if it exist
+FileData =  IntelHex()
+if len(HexFile) > 0 :
+   try:
+     FileData.loadhex(HexFile)
+   except IOError:
+     print 'Error in file "', HexFile, '"'
+     quit()
+
+PicData = FileData.todict()       
+print 'File "', HexFile, '" loaded'
+
+
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+
+
+GPIO.setup(PIC_PGM,GPIO.OUT)
+GPIO.setup(PIC_MCLR,GPIO.OUT)
+GPIO.setup(PIC_CLK,GPIO.OUT)
+GPIO.setup(PIC_DATA,GPIO.IN)
+
+Set_LVP_PIC18()
+CpuRevision = ReadMemoryPic18(0x3ffffe)
+CpuId = ReadMemoryPic18Next()
+CpuId = (CpuId << 8 ) | (CpuRevision & 0xE0)
+CpuRevision = CpuRevision & 0x1f
+
+print "Cpu Id =" , hex(CpuId)
+print "Revision=" , hex(CpuRevision)
+
+DataBase = 0xf00000
+ProgramBase = 0
+ProgramSize = 32768
+WriteBufferSize = 8
+if CpuId != 0x840 :
+   print " not a pic18f258"
+   quit()
+
+BulkErasePic18()
+#ProgramErasePic18(ProgramSize)
+if ProgramBlankCheckPic18(ProgramSize):
+  ProgramBurnPic18MultiPanel(PicData,ProgramBase,ProgramSize,8)
+  if ProgramCheckPic18(PicData,ProgramBase,ProgramSize):
+    print "Program code verification passed!"
+
+#debug dump function
+#ProgramDumpPic18(0x400)
+
+Release_LVP_PIC18()
+
+
+
+
+
+
+
