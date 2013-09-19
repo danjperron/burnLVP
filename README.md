@@ -9,7 +9,7 @@ burnLVP
 
       - burnLVP.py      Original Python code use to program pic12F... and pic16F.....
       - burn18.py       Python code to program pic18F....  
-                        Currently underway only program code on pic18F258 at the moment.
+                        Currently underway! Only program code on pic18F258 at the moment.
   
      Schematic
 
