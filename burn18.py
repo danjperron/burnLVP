@@ -220,6 +220,14 @@ def ReadMemoryPic18Next():
   return ReadDataPic18()
 
 
+
+def LoadEepromAddress(EepromAddress):
+  LoadCode(0x0E00 | ((EepromAddress >>  8)  & 0xff))
+  LoadCode(0x6EAA)
+  LoadCode(0x0E00 | (EepromAddress & 0xff))
+  LoadCode(0x6EA9)
+  
+
 def LoadMemoryAddress(MemoryAddress):
   LoadCode(0x0E00 | ((MemoryAddress >> 16) & 0xff))
   LoadCode(0x6EF8)
@@ -355,30 +363,211 @@ def ProgramBlankCheckPic18(program_size):
        sys.stdout.flush()
    print "Passed!"
    return True
-     
-def ProgramCheckPic18(pic_data, program_base, program_size):     
-   print "Program check ",
-   LoadCode(0)
-   LoadMemoryAddress(0)
-   for l in range (program_size):
+   
+def MemoryCheckPic18(pic_data,memory_base,memory_size):
+   LoadMemoryAddress(memory_base)
+   for l in range (memory_size):
      Value = ReadMemoryPic18Next()
-     TargetValue = SearchByteValue(pic_data,l + program_base)
+     TargetValue = SearchByteValue(pic_data,l + memory_base)
      if(Value != TargetValue):
-       print "Program address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value)
+       print "  **** Address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value)
        return False
      if (l % 1024)==0 :
        sys.stdout.write('.')
        sys.stdout.flush()
-   print "Passed!"
-   return True  
+   return True
+   
+
+def ProgramCheckPic18(pic_data, program_base, program_size):     
+   print "Program check ",
+   if MemoryCheckPic18(pic_data,program_base, program_size):
+     print "Passed!"
+     return True  
+   return False
+
 
        
 
-def ProgramDumpPic18(program_size):
+
+def  DataEepromBurnPic18(pic_data, DataEepromBase, DataEepromSize):
+   print "Writing EEROM dat",
+   #direct access to data EEPROM
+   LoadCode(0x9EA6)
+   LoadCode(0x9CA6)
+   for l in range(DataEepromSize):
+     if (l % 32)==0 :
+       sys.stdout.write('.')
+       sys.stdout.flush()
+     Value= SearchByteValue(pic_data, l + DataEepromBase)
+     if Value == 0xff:
+       continue
+     #Set data EEPROM Address Pointer
+     LoadEepromAddress(l)
+     #Load the data to be written
+     LoadCode(0x0e00 | Value)
+     LoadCode(0x6EA8)
+     #enable memory writes
+     LoadCode(0x84A6) 
+     #perfom required sequence
+     LoadCode(0x0E55)
+     LoadCode(0x6EA7)
+     LoadCode(0x0EAA)
+     LoadCode(0x6EA7)
+     #initiate write
+     LoadCode(0x82A6)
+     while True:
+       #Poll WR bit,
+       LoadCode(0x50A6)
+       LoadCode(0x6EF5)
+       LoadCommandPic18(C_PIC18_TABLAT)
+       EECON1 = ReadDataPic18()
+       if (EECON1 & 2) == 0:
+         break
+     LoadCode(0x94A6)
+   print "Done!"
+
+
+def DataEepromCheckPic18(pic_data, DataEepromBase, DataEepromSize):
+   print "EEROM Data Check",
+   #Direct access to data EEPROM
+   LoadCode(0x9EA6)
+   LoadCode(0x9CA6)
+   for l in range(DataEepromSize):
+     if (l % 32)==0 :
+       sys.stdout.write('.')
+       sys.stdout.flush()
+     Value= SearchByteValue(pic_data, l + DataEepromBase)
+     #Set data EEPROM Address Pointer
+     LoadEepromAddress(l)
+     #Initiate A memory Read
+     LoadCode(0x80A6)
+     #Load data into the serial data
+     LoadCode(0x50A8)
+     LoadCode(0x6EF5)
+     LoadCommandPic18(C_PIC18_TABLAT)
+     RValue= ReadDataPic18()
+     if Value != RValue :
+       print "  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue)
+       return False
+   print "Done!"
+   return True
+   
+def ReadEepromMemoryPic18(EeromAddress):
+   #direct access to data EEPROM
+   LoadCode(0x9EA6)
+   LoadCode(0x9CA6)
+   #Set data EEPROM Address pointer
+   LoadEepromAddress(EeromAddress)
+   #initiate a memory read
+   LoadCode(0x80A6)
+   #Load data into the serial data
+   LoadCode(0x50A8)
+   LoadCode(0x6EF5)
+   LoadCommandPic18(C_PIC18_TABLAT)
+   RValue = ReadDataPic18()
+   return RValue
+   
+
+
+def IDLocationBurnPic18FXXX(pic_data,IDLocationBase,IDLocationSize):
+   print "Writing ID",
+   #direct access config memory
+   LoadCode(0x8EA6)
+   LoadCode(0x8CA6)
+   #configure single Panel
+   LoadMemoryAddress(0x3C0006)
+   LoadCommandWordPic18(C_PIC18_WRITE,0)
+   #Direct access to code memory
+   LoadCode(0x8EA6)
+   LoadCode(0x9CA6)
+   #Load Write buffer
+   LoadMemoryAddress(0x200000)
+   LoadCommandWordPic18(C_PIC18_WRITE_INC_BY2, SearchWordValue(pic_data,IDLocationBase))
+   LoadCommandWordPic18(C_PIC18_WRITE_INC_BY2, SearchWordValue(pic_data,IDLocationBase+2))
+   LoadCommandWordPic18(C_PIC18_WRITE_INC_BY2, SearchWordValue(pic_data,IDLocationBase+4))
+   LoadCommandWordPic18(C_PIC18_START_PGM, SearchWordValue(pic_data,IDLocationBase+6))
+   WriteAndWait()   
+   print " ... Done!"
+   return
+
+def IDLocationCheckPic18(pic_data,ID_Base,ID_Size):
+   print "ID Check ",
+   if MemoryCheckPic18(pic_data,ID_Base,ID_Size):
+     print " ... Passed!"
+     return True  
+   return False
+   
+
+
+   return True
+
+#create a config Mirror of 7 WORDS 
+ConfigMirror = [0xFFFF] * 7
+
+def AnalyzeConfigPic18FXXX(pic_data, config_base):
+   global ConfigMirror
+   ConfigMask= [0x2700,0x0f0f,0x0100,0x0085,0xc00f,0xe00f,0x400f]
+   #transfer Config1 .. Config7  and use mask
+   for l in range(7):
+     ConfigMirror[l] = SearchWordValue(pic_data, config_base + (l * 2)) & ConfigMask[l]   
+   #fix LVP in CONFIG4L  Force LVP
+   ConfigMirror[3] = ConfigMirror[3] | 0x0004
+   
+
+def ConfigBurnPic18FXXX(pic_data, config_base):
+   print "CONFIG Burn",
+   global ConfigMirror
+   AnalyzeConfigPic18FXXX(pic_data,config_base)
+   #burn all config but CONFIG6 last because of WRTC
+   for l in range(5)+[6,5]:
+     #direct access config memory
+     LoadCode(0x8EA6)
+     LoadCode(0x8CA6)
+     #position program counter
+     LoadCode(0xEF00)
+     LoadCode(0xF800)
+     #Set Table Pointer 
+     LoadMemoryAddress(config_base+(l*2))
+     LoadCode(0x6EF6)
+     LoadCommandWordPic18(C_PIC18_WRITE,ConfigMirror[l])
+     WriteAndWait()
+     LoadCode(0x2AF6)
+     LoadCommandWordPic18(C_PIC18_WRITE,ConfigMirror[l])
+     WriteAndWait()
+   print " ... Done!"
+    
+   
+
+def ConfigCheckPic18FXXX(pic_data, config_base):
+   print "Config Check ",
+   global ConfigMirror
+   AnalyzeConfigPic18FXXX(pic_data,config_base)
+   LoadMemoryAddress(config_base)
+   for l in range (14):
+     Value = ReadMemoryPic18Next()
+     if (l & 1) == 0 :
+        TargetValue = ConfigMirror[l / 2] & 0xff
+     else:
+        TargetValue = (ConfigMirror[l/2] >> 8) & 0xff
+     if(Value != TargetValue):
+       print "  **** Address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value)
+       return False
+     if (l % 1024)==0 :
+       sys.stdout.write('.')
+       sys.stdout.flush()
+   print " ... Passed!"
+   return True
+
+
+
+
+def ProgramDumpPic18(dump_base,dump_size):
+   print ""
+   print "----- MEMORY DUMP -----  BASE=", hex(dump_base)
    LoadCode(0)
-   LoadMemoryAddress(0)
-   for l in range (program_size):
-     LoadMemoryAddress(l)
+   LoadMemoryAddress(dump_base)
+   for l in range (dump_size):
+     LoadMemoryAddress(dump_base+l)
      Value = ReadMemoryPic18Next()
      if (l % 32) == 0:
       print format(l,'04x'), ":" ,
@@ -389,39 +578,45 @@ def ProgramDumpPic18(program_size):
      if (l % 32) == 31:
       print " "
 
-def  DataEepromBurnPic18(PicData, DataEepromBase, DataEepromSize):
-   print "EEROM Programing not implemented yet"
-   return
-
-def DataEepromCheckPic18(PicData, DataEepromBase, DataEepromSize):
-   print "EEROM Programing Check not implemented yet"
-   return True
-
-def IDLocationBurnPic18(PicData,IDLocationBase,IDLocationSize):
-   print "ID  Programing not implemented yet"
-   return
-
-def IDLocationCheckPic18(PicData,IDLocationBase,IDLocationSize):
-   print "ID Programing Check implemented yet"
-   return True
-
-def ConfigBurnPic18(PicData, ConfigBase, ConfigSize):
-   print "CONFIG  Programing not implemented yet"
-   return
-
-def ConfigCheckPic18(PicData, ConfigBase, ConfigSize):
-   print "CONFIG Programing Check not implemented yet"
-   return True
-
-
-
-
-
+def DataEeromDumpPic18(data_size):
+   print ""
+   print "----- EEROM DATA -----"
+   for l in range(data_size):
+     Value = ReadEepromMemoryPic18(l)
+     if (l % 32) == 0:
+      print format(l,'04x'), ":" ,
+     else:
+       if (l % 4) == 0:
+         print "-",
+     print format(Value,'02X'),
+     if (l % 32) == 31:
+      print " "
 
 
 
 
 #///  GENERIC FUNCTION
+
+def ConfigCheckPic18(pic_data, config_base, config_size):
+  global PicFamilly
+  if PicFamilly == PIC18FXXX:
+    ConfigCheckPic18FXXX(pic_data, config_base)
+
+
+def ConfigBurnPic18(pic_data, config_base, config_size):
+  global PicFamilly
+  if PicFamilly == PIC18FXXX:
+    ConfigBurnPic18FXXX(pic_data,config_base)
+
+
+def IDLocationBurnPic18(pic_data,IDLocationBase,IDLocationSize):
+  global PicFamilly
+  if PicFamilly == PIC18FXXX:
+    IDLocationBurnPic18FXXX(pic_data,IDLocationBase,IDLocationSize)
+#  elif PicFamilly == PIC18FXXXX:
+#  else:
+
+
 
 def  BulkErasePic18():
   global PicFamilly
@@ -437,7 +632,7 @@ def   ProgramBurnPic18(PicData,ProgramBase,ProgramSize):
   if PicFamilly == PIC18FXXX:
     ProgramBurnPic18MultiPanel(PicData,ProgramBase,ProgramSize,8)
 #  elif PicFamilly == PIC18FXXXX:
-#    ProgramBurnPic18F25580:
+#    ProgramBurnPic18F2580:
 #  else:
 
 
@@ -511,10 +706,19 @@ if ProgramBlankCheckPic18(ProgramSize):
       if IDLocationCheckPic18(PicData,IDLocationBase,IDLocationSize):
         ConfigBurnPic18(PicData, ConfigBase, ConfigSize)
         if ConfigCheckPic18(PicData, ConfigBase, ConfigSize):
-          print "Program verification passed!"
+           print "Program verification passed!"
+
 
 #debug dump function
-#ProgramDumpPic18(0x400)
+#ProgramDumpPic18(0,0x100)
+#DataEeromDumpPic18(256)
+
+#Code DUMP  
+#ProgramDumpPic18(ProgramBase+ offset, size)
+
+
+#CONFIG DUMP
+#ProgramDumpPic18(ConfigBase,ConfigSize)
 
 Release_LVP_PIC18()
 
