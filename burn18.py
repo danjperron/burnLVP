@@ -25,10 +25,12 @@
 #                   Code programming multi-Panel working
 #                   Code check working
 #
-#  Left To do:
-#                   Add EEROM DATA programming and checking
-#                   Add config programming and checking
+#  19 sept. update :
+#                    EEROM DATA programming and checking  complete
+#                    ID and config programming and checking complete
+#                    Add generic function to implement other Pic18 familly
 #
+#  Next thinsg to do:
 #                   Add pic18Fxxx2 pic18Fxxx8 familly
 #                   Add pic18Fxxk80 familly
 
