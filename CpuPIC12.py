@@ -64,7 +64,7 @@ class PIC12:
 
   ConfigBase  = 0x10000
   
-  PicFamilly = "PIC12"
+  PicFamily = "PIC12/16"
 
   #cpu list  dict.   CpuId [Pic Name, ProgramSize]
   CpuList =  {  0x1b80 : ['PIC12F1840'  , 4096] ,

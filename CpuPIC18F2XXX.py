@@ -2,7 +2,7 @@
 
 ################################
 #
-#  Class to program PIC18F2XXX and PIC18F4XXX familly
+#  Class to program PIC18F2XXX and PIC18F4XXX family
 #
 #
 #  class PIC18F2XXX 
@@ -115,7 +115,7 @@ class PIC18F2XXX(PIC18F):
 		0x2760 : ['PIC18F4685' , 0xFFE0 , 0x1F , 0x4000 , 6 , 0x18000 , 64 ]
              }
 
-  PicFamilly = 'PIC18F2XXX'
+  PicFamily = 'PIC18F2XXX'
  
 
   def BulkErase(self):
@@ -274,7 +274,7 @@ class PIC18F2XXX(PIC18F):
       TargetValue = TargetValue | (TargetValue << 8)
       #Set Table Pointer 
       self.LoadMemoryAddress(self.ConfigBase+l)
-      self.LoadCommandWord(self.C_PIC18_WRITE,TargetValue)
+      self.LoadCommandWord(self.C_PIC18_START_PGM,TargetValue)
       self.WriteAndWait()
     print " ... Done!"
     

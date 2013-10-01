@@ -28,9 +28,9 @@
 #  19 sept. update :
 #                    EEROM DATA programming and checking  complete
 #                    ID and config programming and checking complete
-#                    Add generic function to implement other Pic18 familly
+#                    Add generic function to implement other Pic18 family
 #
-#  26 sept :        Use class to create function specific to cpu familly .
+#  26 sept :        Use class to create function specific to cpu family .
 
 
 #////////////////////////////////////  MIT LICENSE ///////////////////////////////////
@@ -64,20 +64,18 @@ from select import select
 import burnGPIO as IO
 
 
-#=======  Pic Familly Class import
+#=======  Pic Family Class import
 
 #import burnLVP_Pic12
 from CpuPIC12      import PIC12
 from CpuPIC18FXX2  import PIC18FXX2
 from CpuPIC18F2XXX import PIC18F2XXX
-#from CpuPIC18FXXK80 import PIC18FXXK80
-#CpuPic12 = burnLVP_Pic12.Cpu(Pins)
+from CpuPIC18FXXK80 import PIC18FXXK80
 pic12     = PIC12()
 pic18fxx2 = PIC18FXX2()
 pic18f2xxx = PIC18F2XXX()
-#pic18fxxk80 = PIC18FXXK80()
-#AllCpuFamilly = [pic12,pic18fxx2,pic18fxxk80,pic18f2xxx]
-AllCpuFamilly = [pic12,pic18fxx2,pic18f2xxx]
+pic18fxxk80 = PIC18FXXK80()
+AllCpuFamily = [pic12,pic18fxx2,pic18f2xxx,pic18fxxk80]
 
 #=============  main ==========
 
@@ -106,18 +104,18 @@ PicData = FileData.todict()
 print 'File "', HexFile, '" loaded'
 
 
-#try to figure out the CpuId by scanning all available Cpu familly
+#try to figure out the CpuId by scanning all available Cpu family
 
 CpuId=0
 print "Scan CPU "
 
-for l in AllCpuFamilly:
+for l in AllCpuFamily:
   CpuTag = l.ScanCpuTag()
   if(CpuTag!=0):
     #found the correct cpu
     print "Cpu Id   =", hex(l.CpuId)
     print "Revision = ", hex(l.CpuRevision)
-    #ok set the cpu familly who find the cpu
+    #ok set the cpu family who find the cpu
     CpuF=l
     break;
   else:
@@ -127,13 +125,13 @@ if CpuTag == 0:
   print " Unable to identify cpu type"
   quit()
 
-#now let's find the Cpu Familly
+#now let's find the Cpu Family
 
 CpuInfo=None
-for l in AllCpuFamilly:
+for l in AllCpuFamily:
   CpuInfo = l.FindCpu(CpuTag)
   if CpuInfo != None:
-    print "Found ", CpuInfo[0], "from Cpu Familly ",l.PicFamilly
+    print "Found ", CpuInfo[0], "from Cpu Family ",l.PicFamily
     print "Cpu Id:", hex(l.CpuId), " revision:", l.CpuRevision 
     CpuF = l
     break;
@@ -157,17 +155,20 @@ if CpuInfo==None:
 CpuF.BulkErase()
 if CpuF.ProgramBlankCheck():
   if CpuF.DataBlankCheck():
-   CpuF.ProgramBurn(PicData)
-   if CpuF.ProgramCheck(PicData):
-      CpuF.DataBurn(PicData)
-      if CpuF.DataCheck(PicData):
-        CpuF.IDBurn(PicData)
-        if CpuF.IDCheck(PicData):
-          CpuF.ConfigBurn(PicData)
-          if CpuF.ConfigCheck(PicData):
-            print "Program verification passed!"
+    CpuF.ProgramBurn(PicData)
+    if CpuF.ProgramCheck(PicData):
+       CpuF.DataBurn(PicData)
+       if CpuF.DataCheck(PicData):
+         CpuF.LoadMemoryAddress(0)
+         CpuF.ReadMemoryNext()
+         CpuF.IDBurn(PicData)
+         if CpuF.IDCheck(PicData):
+           CpuF.ConfigBurn(PicData)
+           if CpuF.ConfigCheck(PicData):
+             print "Program verification passed!" 
 
 #release LVP and force reset
+#CpuF.MemoryDump(CpuF.ConfigBase,14)
 CpuF.Release_LVP()
 
 

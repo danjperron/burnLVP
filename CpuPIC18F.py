@@ -76,7 +76,7 @@ class PIC18F:
   ConfigBase = 0x300000
   ConfigSize = 14
   WriteBufferSize = 8
-
+  PicFamily= "PIC18F..."
 
    
 
@@ -136,6 +136,7 @@ class PIC18F:
    for loop in range(16):
      IO.GPIO.output(IO.PIC_DATA, (Value & 1) ==1 )
      IO.GPIO.output(IO.PIC_CLK, True)
+     pass
      IO.GPIO.output(IO.PIC_CLK, False)
      Value = Value >> 1;
 
@@ -146,7 +147,9 @@ class PIC18F:
     IO.GPIO.output(IO.PIC_CLK, False)
    Value = 0
    for loop in range(8):
+
     IO.GPIO.output( IO.PIC_CLK, True)
+    pass
     if IO.GPIO.input(IO.PIC_DATA):
         Value =  Value | (1 << loop)
     IO.GPIO.output(IO.PIC_CLK, False)
@@ -156,8 +159,11 @@ class PIC18F:
    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
    for loop in range(4):
      IO.GPIO.output(IO.PIC_DATA, (Value & 1) == 1)
+     pass
      IO.GPIO.output(IO.PIC_CLK, True)
+     pass
      IO.GPIO.output(IO.PIC_CLK, False)
+     pass
      Value = Value >> 1;
 
   def LoadCommandWord(self,CommandValue,WordValue):
@@ -210,6 +216,9 @@ class PIC18F:
     self.LoadWord(0)
 
 
+
+
+
   #validate search data in hex file dictionary. If it is not there assume blank (0xff)
   def SearchByteValue(self,pic_data, AddressPointer):
     if pic_data.get(AddressPointer) != None:
@@ -223,7 +232,7 @@ class PIC18F:
 
 
   def ScanCpuTag(self):
-   print "check PIC18..."
+   print "check ", self.PicFamily, "..."
    self.Set_LVP()
    _Byte1 = self.ReadMemory(0x3ffffe)
    _Byte2 = self.ReadMemoryNext()
@@ -333,3 +342,19 @@ class PIC18F:
       return True
     return False
 
+  def MemoryDump(self,dump_base,dump_size):
+    print ""
+    print "----- MEMORY DUMP -----  BASE=", hex(dump_base)
+    self.LoadCode(0)
+    self.LoadMemoryAddress(dump_base)
+    for l in range (dump_size):
+      self.LoadMemoryAddress(dump_base+l)
+      Value = self.ReadMemoryNext()
+      if (l % 32) == 0:
+       print format(l,'04x'), ":" ,
+      else:
+        if (l % 4) == 0:
+          print "-",
+      print format(Value,'02X'),
+      if (l % 32) == 31:
+       print " "

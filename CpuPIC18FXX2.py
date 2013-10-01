@@ -2,7 +2,7 @@
 
 ################################
 #
-#  Class to program PIC18FXX8 and PIC18FXX2 familly
+#  Class to program PIC18FXX8 and PIC18FXX2 family
 #
 #
 #  class PIC18FXX8 
@@ -69,7 +69,7 @@ class PIC18FXX2(PIC18F):
               0x0860 : ['PIC18F458' , 32768]
              }
 
-  PicFamilly = 'PIC18FXX2'
+  PicFamily = 'PIC18FXX2'
  
 
 
