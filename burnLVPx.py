@@ -70,11 +70,13 @@ import burnGPIO as IO
 from CpuPIC12      import PIC12
 from CpuPIC18FXX2  import PIC18FXX2
 from CpuPIC18F2XXX import PIC18F2XXX
-
+#from CpuPIC18FXXK80 import PIC18FXXK80
 #CpuPic12 = burnLVP_Pic12.Cpu(Pins)
 pic12     = PIC12()
 pic18fxx2 = PIC18FXX2()
 pic18f2xxx = PIC18F2XXX()
+#pic18fxxk80 = PIC18FXXK80()
+#AllCpuFamilly = [pic12,pic18fxx2,pic18fxxk80,pic18f2xxx]
 AllCpuFamilly = [pic12,pic18fxx2,pic18f2xxx]
 
 #=============  main ==========
@@ -151,17 +153,18 @@ if CpuInfo==None:
 #
 
 #
-#CpuF.BulkErase()
+
+CpuF.BulkErase()
 if CpuF.ProgramBlankCheck():
-#  if CpuF.DataBlankCheck():
-#   CpuF.ProgramBurn(PicData)
-#   if CpuF.ProgramCheck(PicData):
-#      CpuF.DataBurn(PicData)
-#      if CpuF.DataCheck(PicData):
-#        CpuF.IDBurn(PicData)
-#        if CpuF.IDCheck(PicData):
-#          CpuF.ConfigBurn(PicData)
-#          if CpuF.ConfigCheck(PicData):
+  if CpuF.DataBlankCheck():
+   CpuF.ProgramBurn(PicData)
+   if CpuF.ProgramCheck(PicData):
+      CpuF.DataBurn(PicData)
+      if CpuF.DataCheck(PicData):
+        CpuF.IDBurn(PicData)
+        if CpuF.IDCheck(PicData):
+          CpuF.ConfigBurn(PicData)
+          if CpuF.ConfigCheck(PicData):
             print "Program verification passed!"
 
 #release LVP and force reset
