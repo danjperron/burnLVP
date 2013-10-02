@@ -19,6 +19,9 @@
 #
 #
 #
+#  P.S. config mask maybe need to be updated for specific cpu
+#
+#
 
 #////////////////////////////////////  MIT LICENSE ///////////////////////////////////
 #	The MIT License (MIT)
@@ -41,6 +44,10 @@
 #	COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 #	IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 #	CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+#
+#
+#
 
 
 
@@ -130,15 +137,6 @@ class PIC18F2XXX(PIC18F):
     self.LoadCommand(self.C_PIC18_NOP)
     #wait 12 ms
     sleep(0.012)
-    self.LoadWord(0)    
-    #let's bulk erase eeprom data
-    self.LoadMemoryAddress(0x3c0005)
-    self.LoadCommandWord(self.C_PIC18_WRITE,0)
-    self.LoadMemoryAddress(0x3c0004)
-    self.LoadCommandWord(self.C_PIC18_WRITE,0x8484)
-    self.LoadCode(0)
-    self.LoadCommand(self.C_PIC18_NOP)
-    sleep(0.012)
     self.LoadWord(0)
     print "..... Done!"
 
@@ -146,7 +144,6 @@ class PIC18F2XXX(PIC18F):
 
   def ProgramBurn(self, pic_data):
     print "Writing Program",
-    print "Write buffer size =",self.WriteBufferSize
     #Direct access to code memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x9CA6)
@@ -185,8 +182,57 @@ class PIC18F2XXX(PIC18F):
 
          
 
+  def DataBlankCheck(self):
+    print "EEPROM DATA[",self.DataSize,"] Blank Check ",
+    #Direct access to data EEPROM
+    self.LoadCode(0x9EA6)
+    self.LoadCode(0x9CA6)
+    for l in range(self.DataSize):
+      if (l % 32)==0 :
+        sys.stdout.write('.')
+        sys.stdout.flush()
+      #Set data EEPROM Address Pointer
+      self.LoadEepromAddress(l)
+      #Initiate A memory Read
+      self.LoadCode(0x80A6)
+      #Load data into the serial data
+      self.LoadCode(0x50A8)
+      self.LoadCode(0x6EF5)
+      self.LoadCode(0)  
+      self.LoadCommand(self.C_PIC18_TABLAT)
+      RValue= self.ReadData()
+      if RValue != 0xff :
+        print "  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue)
+        return False
+    print "Done!"
+    return True
 
 
+  def DataCheck(self,pic_data):
+    print "EEPROM DATA[",self.DataSize,"]  Check ",
+    #Direct access to data EEPROM
+    self.LoadCode(0x9EA6)
+    self.LoadCode(0x9CA6)
+    for l in range(self.DataSize):
+      if (l % 32)==0 :
+        sys.stdout.write('.')
+        sys.stdout.flush()
+      Value = self.SearchByteValue(pic_data, l + self.DataBase)
+      #Set data EEPROM Address Pointer
+      self.LoadEepromAddress(l)
+      #Initiate A memory Read
+      self.LoadCode(0x80A6)
+      #Load data into the serial data
+      self.LoadCode(0x50A8)
+      self.LoadCode(0x6EF5)
+      self.LoadCode(0)
+      self.LoadCommand(self.C_PIC18_TABLAT)
+      RValue= self.ReadData()
+      if Value != RValue :
+        print "  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue)
+        return False
+    print "Done!"
+    return True
 
        
 
@@ -253,41 +299,62 @@ class PIC18F2XXX(PIC18F):
     print " ... Done!"
     return  
 
-
-  ConfigMask= [0xCF3F, 0x1F3F, 0x8700, 0x00FD, 0xC03F, 0xE03F, 0x403F];
-
-
+  ConfigMask = [0x3F, 0xCF, 0x3F, 0x1F, 0, 0x87, 0xfd,0, 0x3F, 0xc0, 0x3F, 0xE0, 0x3F, 0x40] 
   def ConfigBurn(self,pic_data):
     print "CONFIG Burn",
-    #burn all config but CONFIG6H last because of WRTC
+    #direct access config memory
+    self.LoadCode(0x8EA6)
+    self.LoadCode(0x8CA6)
+
+    #burn all config but CONFIG6 last because of WRTC
     for l in range(11)+[12,13,11]:
-      #direct access config memory
-      self.LoadCode(0x8EA6)
-      self.LoadCode(0x8CA6)
-      #position program counter
-      self.LoadCode(0xEF00)
-      self.LoadCode(0xF800)
-      #get Config target value
-      TargetValue = pic_data.get(self.ConfigBase + l)
+      #if config is 30004h or 30007h skip it
+      if  (l == 4) or (l==7) :
+        continue
+      #get Config Target Value
+      TargetValue = pic_data.get(self.ConfigBase +l)
       if TargetValue == None:
         continue
+      #force VLP
+      if l==6:
+        TargetValue= TargetValue | 4
+      #use mask to disable unwanted bit
+      TargetValue = TargetValue & self.ConfigMask[l]
+      #put MSB and LSB the same
       TargetValue = TargetValue | (TargetValue << 8)
-      #Set Table Pointer 
-      self.LoadMemoryAddress(self.ConfigBase+l)
+      self.LoadMemoryAddress(self.ConfigBase+ l)
       self.LoadCommandWord(self.C_PIC18_START_PGM,TargetValue)
       self.WriteAndWait()
+    self.LoadCode(0x94A6)
     print " ... Done!"
-    
-   
 
+  
   def ConfigCheck(self,pic_data):
     print "Config Check ",
-
-#    config parameter too different from cpu to cpu
-#    just skip it
-
-    print "Skipped"
+    self.LoadMemoryAddress(self.ConfigBase)
+    for l in range (14):
+      Value = self.ReadMemoryNext()
+      #if config is 30004h or 30007h skip it
+      if  (l == 4) or (l==7) :
+        continue
+      TargetValue = pic_data.get(self.ConfigBase +l)
+      if TargetValue == None:
+        continue
+      #force VLP
+      if l==6:
+        TargetValue= TargetValue  | 4
+      #use mask to disable unwanted bit
+      TargetValue = TargetValue & self.ConfigMask[l]
+      Value = Value & self.ConfigMask[l]
+      if(Value != TargetValue):
+        print "  **** Address ", hex(l), " write  ", hex(TargetValue), " read", hex(Value)
+        return False
+      if (l % 1024)==0 :
+        sys.stdout.write('.')
+        sys.stdout.flush()
+    print " ... Passed!"
     return True
+ 
 
 
 

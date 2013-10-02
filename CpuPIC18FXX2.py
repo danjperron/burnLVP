@@ -252,10 +252,10 @@ class PIC18FXX2(PIC18F):
       #Set Table Pointer 
       self.LoadMemoryAddress(self.ConfigBase+(l*2))
       self.LoadCode(0x6EF6)
-      self.LoadCommandWord(self.C_PIC18_WRITE,self.ConfigMirror[l])
+      self.LoadCommandWord(self.C_PIC18_START_PGM,self.ConfigMirror[l])
       self.WriteAndWait()
       self.LoadCode(0x2AF6)
-      self.LoadCommandWord(self.C_PIC18_WRITE,self.ConfigMirror[l])
+      self.LoadCommandWord(self.C_PIC18_START_PGM,self.ConfigMirror[l])
       self.WriteAndWait()
     print " ... Done!"
     

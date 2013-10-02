@@ -79,7 +79,6 @@ AllCpuFamily = [pic12,pic18fxx2,pic18f2xxx,pic18fxxk80]
 
 #=============  main ==========
 
-IO.Setup_Interface()
 
 if __name__ == '__main__':
   if len(sys.argv) is 2:
@@ -105,6 +104,7 @@ print 'File "', HexFile, '" loaded'
 
 
 #try to figure out the CpuId by scanning all available Cpu family
+IO.Setup_Interface()
 
 CpuId=0
 print "Scan CPU "
@@ -159,8 +159,6 @@ if CpuF.ProgramBlankCheck():
     if CpuF.ProgramCheck(PicData):
        CpuF.DataBurn(PicData)
        if CpuF.DataCheck(PicData):
-         CpuF.LoadMemoryAddress(0)
-         CpuF.ReadMemoryNext()
          CpuF.IDBurn(PicData)
          if CpuF.IDCheck(PicData):
            CpuF.ConfigBurn(PicData)
