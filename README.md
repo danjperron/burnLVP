@@ -8,11 +8,10 @@ burnLVP
      The Python code
 
       - burnLVP.py      Original Python code use to program pic12F... and pic16F.....
-      - burn18.py       Python code to program pic18F....  
-                        Currently underway! Only program code on pic18F258 at the moment.
-  
+      - burn18.py       Python code to program pic18F....  Please use burnLVPx.py instead
+                      
 
-     Experimental V2.0  and ongoing version (Not fully finished)
+      BurnLVPx          ( PIC12,16 and 18 family)
 
       - burnLVPx.py     Version to burn PIC12 and PIC18 Familly.
       - CpuPIC12.py	    PIC12 class
