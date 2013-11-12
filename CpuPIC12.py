@@ -250,8 +250,9 @@ class PIC12:
     print "Writing Data",
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range( self.DataSize):
-      if pic_data.get(l + self.DataBase) != None :
-        Value = pic_data.get(l + self.DataBase)
+     if pic_data.get(l*2 + self.DataBase) != None :
+      if pic_data.get(l*2 + self.DataBase + 1) != None :
+        Value = pic_data.get(l*2 + self.DataBase)
         self.SendCommand(self.C_LOAD_DATA)
         self.LoadWord(Value)
         self.SendCommand(self.C_BEGIN_INT_PROG)
@@ -294,8 +295,9 @@ class PIC12:
     print "Data check ",
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.DataSize):
-      if pic_data.get(l+ self.DataBase) != None :
-        Value = pic_data.get(l+self.DataBase)
+     if pic_data.get(l*2 + self.DataBase) != None :
+      if pic_data.get(l*2 + self.DataBase+1) != None :
+        Value = pic_data.get(l*2+self.DataBase)
         self.SendCommand(self.C_READ_DATA)
         RValue = self.ReadWord()
         if Value != RValue :
