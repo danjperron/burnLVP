@@ -14,7 +14,7 @@ burnLVP
       BurnLVPx          ( PIC12,16 and 18 family)
 
       - burnLVPx.py     Version to burn PIC12 and PIC18 Familly.
-      - CpuPIC12.py	    PIC12 class
+      - CpuPIC12.py	    PIC12 & PIC16 class
       - CpuPIC18F.py    PIC18 generic class
       - CpuPIC18FXX2    PIC18FXX2 class  (like  PIC18F258)
       - CpuPIC18F2XXX   PIC18F2XXX Class (like PIC18F2580)
