@@ -19,6 +19,7 @@ burnLVP
       - CpuPIC18FXX2    PIC18FXX2 class  (like  PIC18F258)
       - CpuPIC18F2XXX   PIC18F2XXX Class (like PIC18F2580)
       - CpuPIC18FXXK80  PIC18FXXK80 Class (like PIC18F26K80)
+      - CpuPIC18F2_4XK22 PIC18F2_4XK22 Class thanks to Pascal Sandrez
       - burnGPIO.py     IO interface to quickly change type  of IO. (PC , USB, etc..)
 
      Schematic
