@@ -180,62 +180,6 @@ class PIC18F2XXX(PIC18F):
         sys.stdout.flush()
     print "Done!"
 
-         
-
-  def DataBlankCheck(self):
-    print "EEPROM DATA[",self.DataSize,"] Blank Check ",
-    #Direct access to data EEPROM
-    self.LoadCode(0x9EA6)
-    self.LoadCode(0x9CA6)
-    for l in range(self.DataSize):
-      if (l % 32)==0 :
-        sys.stdout.write('.')
-        sys.stdout.flush()
-      #Set data EEPROM Address Pointer
-      self.LoadEepromAddress(l)
-      #Initiate A memory Read
-      self.LoadCode(0x80A6)
-      #Load data into the serial data
-      self.LoadCode(0x50A8)
-      self.LoadCode(0x6EF5)
-      self.LoadCode(0)  
-      self.LoadCommand(self.C_PIC18_TABLAT)
-      RValue= self.ReadData()
-      if RValue != 0xff :
-        print "  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue)
-        return False
-    print "Done!"
-    return True
-
-
-  def DataCheck(self,pic_data):
-    print "EEPROM DATA[",self.DataSize,"]  Check ",
-    #Direct access to data EEPROM
-    self.LoadCode(0x9EA6)
-    self.LoadCode(0x9CA6)
-    for l in range(self.DataSize):
-      if (l % 32)==0 :
-        sys.stdout.write('.')
-        sys.stdout.flush()
-      Value = self.SearchByteValue(pic_data, l + self.DataBase)
-      #Set data EEPROM Address Pointer
-      self.LoadEepromAddress(l)
-      #Initiate A memory Read
-      self.LoadCode(0x80A6)
-      #Load data into the serial data
-      self.LoadCode(0x50A8)
-      self.LoadCode(0x6EF5)
-      self.LoadCode(0)
-      self.LoadCommand(self.C_PIC18_TABLAT)
-      RValue= self.ReadData()
-      if Value != RValue :
-        print "  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue)
-        return False
-    print "Done!"
-    return True
-
-       
-
 
   def  DataBurn(self,pic_data):
     print "Writing EEPROM data[",self.DataSize,"]",
@@ -264,7 +208,7 @@ class PIC18F2XXX(PIC18F):
         self.LoadCode(0x50A6)
         self.LoadCode(0x6EF5)
         self.LoadCommand(self.C_PIC18_TABLAT)
-        EECON1 = self.ReadDataPic18()
+        EECON1 = self.ReadData()
         if (EECON1 & 2) == 0:
           break
 # sleep maybe needed if using python compiler
@@ -374,6 +318,3 @@ class PIC18F2XXX(PIC18F):
          self.WriteBufferSize = _cpuInfo[self.ListWriteBufferSize]
          return _cpuInfo 
     return  None
-
-
-
