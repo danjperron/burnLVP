@@ -45,7 +45,7 @@
 
 
 
-import burnGPIO as IO
+from burnGPIO import *
 from time import sleep
 import sys, termios, atexit
 from intelhex import IntelHex
@@ -85,7 +85,7 @@ class PIC18FXXK80(PIC18F):
     magic = 0x4d434850
     
     #MSB FIRST
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
+    setDataModeWrite()
     
     for loop in range(32):
       f = (magic & 0x80000000) == 0x80000000
@@ -93,26 +93,26 @@ class PIC18FXXK80(PIC18F):
 #        print 1,
 #      else:
 #        print 0,
-#      IO.GPIO.output(IO.PIC_DATA, (magic & 0x80000000) == 0x80000000)
-      IO.GPIO.output(IO.PIC_DATA, f)
-      IO.GPIO.output(IO.PIC_CLK, True)
-      IO.GPIO.output(IO.PIC_CLK, False)
+#      setDataState( (magic & 0x80000000) == 0x80000000)
+      setDataState( f)
+      setClockState( True)
+      setClockState( False)
       magic = magic << 1
 
   def Set_LVP(self):
      #put MCLR HIGH
-     IO.GPIO.output(IO.PIC_CLK, False)
-     IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
-     IO.GPIO.output(IO.PIC_DATA, False)
-     IO.GPIO.output(IO.PIC_MCLR, True)
+     setClockState( False)
+     setDataModeWrite()
+     setDataState( False)
+     setMCLRState( True)
      sleep(0.1)
      #put MCLR LOW
-     IO.GPIO.output(IO.PIC_MCLR, False)
+     setMCLRState( False)
      sleep(0.001)
      self.SendMagic()
      sleep(0.001)
      #put MCLR HIGH
-     IO.GPIO.output(IO.PIC_MCLR, True)
+     setMCLRState( True)
      sleep(0.1)
      _byte1 = self.ReadMemory(0x3ffffe)
      _byte2 = self.ReadMemoryNext()
@@ -120,9 +120,9 @@ class PIC18FXXK80(PIC18F):
 
   def Release_LVP(self):
      #just keep it on reset
-     IO.GPIO.output(IO.PIC_MCLR, True)
+     setMCLRState( True)
      sleep(0.001)
-     IO.GPIO.output(IO.PIC_MCLR, False)
+     setMCLRState( False)
 
 
 
@@ -293,17 +293,17 @@ class PIC18FXXK80(PIC18F):
   ConfigMask = [0x5d, 0xdf, 0x7F, 0x7f, 0, 0x8f, 0x91,0, 0x0f, 0xC0, 0x0F, 0xE0, 0x0f, 0x40]
 
   def WriteConfig(self):
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
-    IO.GPIO.output(IO.PIC_DATA, False)
+    setDataModeWrite()
+    setDataState( False)
     pass
     for loop in range(3):
-       IO.GPIO.output(IO.PIC_CLK, True)
+       setClockState( True)
        pass
-       IO.GPIO.output(IO.PIC_CLK, False)
+       setClockState( False)
        pass
-    IO.GPIO.output(IO.PIC_CLK, True)
+    setClockState( True)
     sleep(0.01)
-    IO.GPIO.output(IO.PIC_CLK, False)
+    setClockState( False)
     pass
     self.LoadWord(0)
 
@@ -366,31 +366,10 @@ class PIC18FXXK80(PIC18F):
     self.LoadCode(0x6E75)
 
   def DataBlankCheck(self):
-    print "EEPROM DATA[",self.DataSize,"] Blank Check ",
-    #Direct access to data EEPROM
-    self.LoadCode(0x9E7F)
-    self.LoadCode(0x9C7F)
-    for l in range(self.DataSize):
-      if (l % 32)==0 :
-        sys.stdout.write('.')
-        sys.stdout.flush()
-      #Set data EEPROM Address Pointer
-      self.LoadEepromAddress(l)
-      #Initiate A memory Read
-      self.LoadCode(0x807F)
-      #Load data into the serial data
-      self.LoadCode(0x5073)
-      self.LoadCode(0x6EF5)
-      self.LoadCode(0)
-      self.LoadCommand(self.C_PIC18_TABLAT)
-      RValue= self.ReadData()
-      if RValue != 0xff :
-        print "  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue)
-        return False
-    print "Done!"
-    return True
+    print "EEPROM DATA[",self.DataSize,"] Blank Check "
+    return self.DataCheck( None, 0xff)
 
-  def DataCheck(self,pic_data):
+  def DataCheck(self,pic_data,checkValue=None):
     print "EEPROM DATA[",self.DataSize,"]  Check ",
     #Direct access to data EEPROM
     self.LoadCode(0x9E7F)
@@ -399,7 +378,7 @@ class PIC18FXXK80(PIC18F):
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-      Value = self.SearchByteValue(pic_data, l + self.DataBase)
+      Value = checkValue if checkValue is not None else self.SearchByteValue(pic_data, l + self.DataBase)
       #Set data EEPROM Address Pointer
       self.LoadEepromAddress(l)
       #Initiate A memory Read
@@ -417,7 +396,6 @@ class PIC18FXXK80(PIC18F):
     return True
 
 
-
   def FindCpu(self, Id):
     _cpuInfo =self.CpuList.get(Id & 0xFFE0)
     if _cpuInfo != None:
@@ -426,7 +404,6 @@ class PIC18FXXK80(PIC18F):
       self.CpuRevision = Id &0x1F
       return _cpuInfo 
     return  None
-
 
 
 
