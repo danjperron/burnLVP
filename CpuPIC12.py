@@ -41,7 +41,7 @@
 #	CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE
 
 #import GPIO interface
-import burnGPIO      as IO
+from burnGPIO import *
 
 
 from time import sleep
@@ -109,68 +109,68 @@ class PIC12:
 
   def Set_LVP(self):
     #held MCLR HIGH
-    IO.GPIO.output(IO.PIC_MCLR, True)
+    setMCLRState( True)
     sleep(0.1)
     #ok PIC_CLK=out& HIGH, PIC_DATA=out & LOW
-    IO.GPIO.output(IO.PIC_CLK, False)
+    setClockState( False)
     #MCLR LOW 
-    IO.GPIO.output(IO.PIC_DATA, False)
+    setDataState( False)
 #    print "LVP ON"
-    IO.GPIO.output(IO.PIC_MCLR, False)
+    setMCLRState( False)
     sleep(0.3)
 
   def Release_LVP(self):
 
-    IO.GPIO.output(IO.PIC_MCLR, True)
+    setMCLRState( True)
     sleep(0.1)
-    IO.GPIO.output(IO.PIC_MCLR, False)
+    setMCLRState( False)
 #    print "LVP OFF"
 
   def SendMagic(self):
     magic = 0x4d434850
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)   
+    setDataModeWrite()   
     for loop in range(33):
-      IO.GPIO.output(IO.PIC_CLK, True)
-      IO.GPIO.output(IO.PIC_DATA, (magic & 1) == 1)
+      setClockState( True)
+      setDataState( (magic & 1) == 1)
       pass
-      IO.GPIO.output(IO.PIC_CLK, False)
+      setClockState( False)
       pass
       magic = magic >> 1
 
 
   def SendCommand(self,Command):
-    IO.GPIO.setup( IO.PIC_DATA, IO.GPIO.OUT)
+    setDataModeWrite()
     for loop in range(6):
-      IO.GPIO.output(IO.PIC_CLK, True)
-      IO.GPIO.output(IO.PIC_DATA, (Command & 1) ==1)
+      setClockState( True)
+      setDataState( (Command & 1) ==1)
       pass
-      IO.GPIO.output(IO.PIC_CLK, False)
+      setClockState( False)
       pass
       Command = Command >> 1;
 
 
   def ReadWord(self):
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.IN)
+    setDataModeRead()
     Value = 0
     for loop in range(16):
-      IO.GPIO.output(IO.PIC_CLK, True)
+      setClockState( True)
       pass
-      if IO.GPIO.input(IO.PIC_DATA):
+      if getDataState():
         Value =  Value + (1 << loop)
-      IO.GPIO.output(IO.PIC_CLK, False)
+      setClockState( False)
       pass
     Value = (Value >> 1) & 0x3FFF;
     return Value;
         
 
   def LoadWord(self,Value):
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)   
+    setDataModeWrite()   
     Value = (Value << 1) & 0x7FFE
     for loop in range(16):
-      IO.GPIO.output(IO.PIC_CLK, True)
-      IO.GPIO.output(IO.PIC_DATA,(Value & 1)==1)
+      setClockState( True)
+      setDataState((Value & 1)==1)
       pass
-      IO.GPIO.output(IO.PIC_CLK, False)
+      setClockState( False)
       pass
       Value = Value >> 1;
 
@@ -461,6 +461,5 @@ class PIC12:
       self.CpuId = Id & 0XFFE0
       self.CpuRevision= Id & 0x1F  
     return _cpuInfo
-
 
 
