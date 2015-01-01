@@ -43,7 +43,7 @@
 
 
 #inport GPIO interface
-import burnGPIO as IO
+from burnGPIO import *
 
 from time import sleep
 import sys, termios, atexit
@@ -103,67 +103,74 @@ class PIC18F:
 
   def Set_LVP(self):
    #held MCLR LOW
-   IO.GPIO.output(IO.PIC_MCLR, False)
+   setMCLRState( False)
 
    #hdel PIC_CLK & PIC_DATA & PIC_PGM low
-   IO.GPIO.output(IO.PIC_CLK, False)
-   IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
-   IO.GPIO.output(IO.PIC_DATA, False)
-   IO.GPIO.output(IO.PIC_PGM, False)
+   setClockState( False)
+   setDataModeWrite()
+   setDataState( False)
+   setPGMState( False)
 
    sleep(0.01)
    #set PGM High
-   IO.GPIO.output(IO.PIC_PGM, True)
+   setPGMState( True)
    sleep(0.01)
    #Set MCLR High
-   IO.GPIO.output(IO.PIC_MCLR, True)
+   setMCLRState( True)
    sleep(0.01)
 
 
   def Release_LVP(self):
    #set PGM Low
-   IO.GPIO.output(IO.PIC_PGM, False)
+   setPGMState( False)
    sleep(0.1)
 
    #held MCLR LOW
-   IO.GPIO.output(IO.PIC_MCLR, False)
+   setMCLRState( False)
 
    #keep in reset mode
 
 
   def LoadWord(self, Value):
-   IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
+   setDataModeWrite()
    for loop in range(16):
-     IO.GPIO.output(IO.PIC_DATA, (Value & 1) ==1 )
-     IO.GPIO.output(IO.PIC_CLK, True)
-     pass
-     IO.GPIO.output(IO.PIC_CLK, False)
+     setDataState( (Value & 1) ==1 )
+     setClockState( True)
+     clockInterval()
+     setClockState( False)
+     clockInterval()
      Value = Value >> 1;
 
+  
   def ReadData(self):
-   IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.IN)
+   setDataModeRead()
+   # 8 clock cycles to let data be fetched into registers
    for loop in range(8):
-    IO.GPIO.output(IO.PIC_CLK, True)
-    IO.GPIO.output(IO.PIC_CLK, False)
+    setClockState( True)
+    clockInterval()
+    setClockState( False)
+    clockInterval()
    Value = 0
-   for loop in range(8):
 
-    IO.GPIO.output( IO.PIC_CLK, True)
-    pass
-    if IO.GPIO.input(IO.PIC_DATA):
+   # 8 Read cycles to read from register to data line
+   for loop in range(8):
+    setClockState( True)
+    clockInterval()
+    if getDataState():
         Value =  Value | (1 << loop)
-    IO.GPIO.output(IO.PIC_CLK, False)
+    setClockState( False)
+    clockInterval()
    return Value
 
   def LoadCommand(self,Value):
-   IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
+   setDataModeWrite()
    for loop in range(4):
-     IO.GPIO.output(IO.PIC_DATA, (Value & 1) == 1)
-     pass
-     IO.GPIO.output(IO.PIC_CLK, True)
-     pass
-     IO.GPIO.output(IO.PIC_CLK, False)
-     pass
+     setDataState( (Value & 1) == 1)
+     clockInterval() # MSM pass
+     setClockState( True)
+     clockInterval()
+     setClockState( False)
+     clockInterval()
      Value = Value >> 1;
 
   def LoadCommandWord(self,CommandValue,WordValue):
@@ -205,18 +212,18 @@ class PIC18F:
 
 
   def WriteAndWait(self):
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
-    IO.GPIO.output(IO.PIC_DATA, False)
+    setDataModeWrite()
+    setDataState( False)
     for loop in range(3):
-       IO.GPIO.output(IO.PIC_CLK, True)
-       IO.GPIO.output(IO.PIC_CLK, False)
-    IO.GPIO.output(IO.PIC_CLK, True)
-    sleep(0.001)
-    IO.GPIO.output(IO.PIC_CLK, False)
+       setClockState( True)
+       clockInterval()
+       setClockState( False)
+       clockInterval()
+    setClockState( True)
+    clockInterval()
+    setClockState( False)
+    clockInterval()
     self.LoadWord(0)
-
-
-
 
 
   #validate search data in hex file dictionary. If it is not there assume blank (0xff)
@@ -242,6 +249,7 @@ class PIC18F:
 
    if self.CpuId == 0xFFE0:
      self.CpuTag = 0
+   print "CpuTag:", self.CpuTag
    return self.CpuTag;
   
   def MemoryCheck(self,pic_data,MemoryBase,MemorySize):
@@ -267,10 +275,10 @@ class PIC18F:
 
 
    
-  def ProgramBlankCheck(self):
+  def ProgramBlankCheck(self, numToCheck=None):
     print "Program code [", self.ProgramSize,"] blank check",
     self.LoadMemoryAddress(0)
-    for l in range (self.ProgramSize):
+    for l in range(self.ProgramSize if numToCheck is None else numToCheck):
       Value = self.ReadMemoryNext()
       if(Value != 0xff):
         print "*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!"
@@ -281,32 +289,12 @@ class PIC18F:
     print "Passed!"
     return True
 
+
   def DataBlankCheck(self):
-    print "EEPROM DATA[",self.DataSize,"] Blank Check ",
-    #Direct access to data EEPROM
-    self.LoadCode(0x9EA6)
-    self.LoadCode(0x9CA6)
-    for l in range(self.DataSize):
-      if (l % 32)==0 :
-        sys.stdout.write('.')
-        sys.stdout.flush()
-      #Set data EEPROM Address Pointer
-      self.LoadEepromAddress(l)
-      #Initiate A memory Read
-      self.LoadCode(0x80A6)
-      #Load data into the serial data
-      self.LoadCode(0x50A8)
-      self.LoadCode(0x6EF5)
-      self.LoadCommand(self.C_PIC18_TABLAT)
-      RValue= self.ReadData()
-      if RValue != 0xff :
-        print "  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue)
-        return False
-    print "Done!"
-    return True
+    print "EEPROM Blank Check "
+    return self.DataCheck( None, 0xff)
 
-
-  def DataCheck(self,pic_data):
+  def DataCheck(self,pic_data, checkValue=None ):
     print "EEPROM DATA[",self.DataSize,"]  Check ",
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
@@ -315,7 +303,7 @@ class PIC18F:
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-      Value = self.SearchByteValue(pic_data, l + self.DataBase)
+      Value = checkValue if checkValue is not None else self.SearchByteValue(pic_data, l + self.DataBase)
       #Set data EEPROM Address Pointer
       self.LoadEepromAddress(l)
       #Initiate A memory Read
@@ -323,6 +311,7 @@ class PIC18F:
       #Load data into the serial data
       self.LoadCode(0x50A8)
       self.LoadCode(0x6EF5)
+      self.LoadCode(0)
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue= self.ReadData()
       if Value != RValue :
@@ -335,9 +324,9 @@ class PIC18F:
   
 
 
-  def ProgramCheck(self,pic_data):
+  def ProgramCheck(self,pic_data, numToCheck=None):
     print "Program check ",
-    if self.MemoryCheck(pic_data,self.ProgramBase, self.ProgramSize):
+    if self.MemoryCheck(pic_data,self.ProgramBase, self.ProgramSize if numToCheck is None else numToCheck):
       print "Passed!"
       return True
     return False
