@@ -32,7 +32,8 @@
 #
 #  26 sept :        Use class to create function specific to cpu family .
 #
-#  19 dec. 2014:    Add PIC18F2_4XK22 class.  programmer: Pascal Sandrez
+#  19 dec. 2014: Add PIC18F2_4XK22 class. programmer: Pascal Sandrez
+
 
 #////////////////////////////////////  MIT LICENSE ///////////////////////////////////
 #	The MIT License (MIT)
@@ -62,7 +63,7 @@ from intelhex import IntelHex
 from select import select   
 
 #=======   I/O interface
-import burnGPIO as IO
+from burnGPIO import *
 
 
 #=======  Pic Family Class import
@@ -73,18 +74,22 @@ from CpuPIC18FXX2  import PIC18FXX2
 from CpuPIC18F2XXX import PIC18F2XXX
 from CpuPIC18FXXK80 import PIC18FXXK80
 from CpuPIC18F2_4XK22 import PIC18F2_4XK22
-pic12     = PIC12()
-pic18fxx2 = PIC18FXX2()
-pic18f2xxx = PIC18F2XXX()
-pic18fxxk80 = PIC18FXXK80()
-pic18f2_4xk22 = PIC18F2_4XK22()
-AllCpuFamily = [pic12,pic18fxx2,pic18f2xxx,pic18fxxk80,pic18f2_4xk22]
+
+AllCpuFamily = [PIC12(),PIC18FXX2(),PIC18F2XXX(),PIC18FXXK80(), PIC18F2_4XK22()]
+cpuFamily = AllCpuFamily
 
 #=============  main ==========
 
 
 if __name__ == '__main__':
-  if len(sys.argv) is 2:
+  if len(sys.argv) is 3 :
+    HexFile = sys.argv[1]
+    cpuFamilyName = sys.argv[2]
+    # If cpu family name is passed as argument, check if it exists, and use it
+    cpuFamilyFound = [i for i in AllCpuFamily if i.__class__.__name__ == cpuFamilyName]
+    if len(cpuFamilyFound) > 0 :
+      cpuFamily = cpuFamilyFound
+  elif len(sys.argv) is 2 :
     HexFile = sys.argv[1]
   elif len(sys.argv) is 1:
     HexFile = ''
@@ -107,12 +112,12 @@ print 'File "', HexFile, '" loaded'
 
 
 #try to figure out the CpuId by scanning all available Cpu family
-IO.Setup_Interface()
+Setup_Interface()
 
 CpuId=0
 print "Scan CPU "
 
-for l in AllCpuFamily:
+for l in cpuFamily:
   CpuTag = l.ScanCpuTag()
   if(CpuTag!=0):
     #found the correct cpu
@@ -145,33 +150,26 @@ if CpuInfo==None:
   CpuF.Release_LVP()
   quit()
 
-
-
-
-
 #ok let's start to program
 #LVP mode should be okay since we found the cpu
-#
-
-#
 
 CpuF.BulkErase()
-if CpuF.ProgramBlankCheck():
-  if CpuF.DataBlankCheck():
+if CpuF.ProgramBlankCheck( 10): # Too slow, check only 1st 10
+  if True or CpuF.DataBlankCheck(): # EEPROM read error, bypassed with "True or"
     CpuF.ProgramBurn(PicData)
-    if CpuF.ProgramCheck(PicData):
+    if CpuF.ProgramCheck(PicData, 50): # Too slow, check only 1st 50
        CpuF.DataBurn(PicData)
-       if CpuF.DataCheck(PicData):
+       if True or CpuF.DataCheck(PicData): # EEPROM read error, bypassed with "True or"
          CpuF.IDBurn(PicData)
          if CpuF.IDCheck(PicData):
            CpuF.ConfigBurn(PicData)
            if CpuF.ConfigCheck(PicData):
              print "Program verification passed!" 
 
+
 #release LVP and force reset
 #CpuF.MemoryDump(CpuF.ConfigBase,14)
 CpuF.Release_LVP()
-
 
 
 
