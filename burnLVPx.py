@@ -31,8 +31,6 @@
 #                    Add generic function to implement other Pic18 family
 #
 #  26 sept :        Use class to create function specific to cpu family .
-#
-#  19 dec. 2014: Add PIC18F2_4XK22 class. programmer: Pascal Sandrez
 
 
 #////////////////////////////////////  MIT LICENSE ///////////////////////////////////
@@ -73,9 +71,7 @@ from CpuPIC12      import PIC12
 from CpuPIC18FXX2  import PIC18FXX2
 from CpuPIC18F2XXX import PIC18F2XXX
 from CpuPIC18FXXK80 import PIC18FXXK80
-#from CpuPIC18F2_4XK22 import PIC18F2_4XK22
 
-# PIC18F2_4XK22() to be added after retrofit
 AllCpuFamily = [PIC12(),PIC18FXX2(),PIC18F2XXX(),PIC18FXXK80()]
 cpuFamily = AllCpuFamily
 
@@ -151,16 +147,18 @@ if CpuInfo==None:
   CpuF.Release_LVP()
   quit()
 
+#quit()
+
 #ok let's start to program
 #LVP mode should be okay since we found the cpu
 
 CpuF.BulkErase()
 if CpuF.ProgramBlankCheck( 10): # Too slow, check only 1st 10
-  if True or CpuF.DataBlankCheck(): # EEPROM read error, bypassed with "True or"
+  if CpuF.DataBlankCheck(10): # Too slow, check only 1st 10
     CpuF.ProgramBurn(PicData)
     if CpuF.ProgramCheck(PicData, 50): # Too slow, check only 1st 50
        CpuF.DataBurn(PicData)
-       if True or CpuF.DataCheck(PicData): # EEPROM read error, bypassed with "True or"
+       if CpuF.DataCheck(PicData, 10): # Too slow, check only 1st 10
          CpuF.IDBurn(PicData)
          if CpuF.IDCheck(PicData):
            CpuF.ConfigBurn(PicData)
