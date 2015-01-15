@@ -25,6 +25,6 @@ burnLVP
      Schematic
 
       - RpiPgm.png      Original  schematic to program PIC12F1840 via Raspberry Pi GPIO .
-      - usb2ser_programmer.jpg  schematic for usb version
+      - usb2ser_programmer.jpg  schematic for usb to serial version
 
  
