@@ -290,16 +290,18 @@ class PIC18F:
     return True
 
 
-  def DataBlankCheck(self):
+  def DataBlankCheck(self, checkSize=None):
+    actualCheckSize = self.DataSize if checkSize is None else checkSize;
     print "EEPROM Blank Check "
-    return self.DataCheck( None, 0xff)
+    return self.DataCheck( None, actualCheckSize, 0xff)
 
-  def DataCheck(self,pic_data, checkValue=None ):
-    print "EEPROM DATA[",self.DataSize,"]  Check ",
+  def DataCheck(self,pic_data, checkSize=None, checkValue=None ):
+    actualCheckSize = self.DataSize if checkSize is None else checkSize;
+    print "EEPROM DATA[",actualCheckSize,"]  Check ",
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
-    for l in range(self.DataSize):
+    for l in range( actualCheckSize):
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
