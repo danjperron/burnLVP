@@ -220,6 +220,7 @@ class PIC18F:
        setClockState( False)
        clockInterval()
     setClockState( True)
+    sleep(0.001) # MSM. Needed for Rpi, since clock interal is too small.
     clockInterval()
     setClockState( False)
     clockInterval()
