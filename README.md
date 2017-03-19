@@ -29,7 +29,7 @@ burnLVP
 P.S.  You will need python2.7 and intelhex modules
 
 
-     For the chip cpu just follow these instructionx
+     For the chip cpu just follow these instructions
      
      sudo apt-get update
      sudo apt-get install git
