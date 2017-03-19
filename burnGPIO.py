@@ -8,23 +8,55 @@
 #  All class will use this file for reference
 #
 #
-import RPi.GPIO as GPIO
 
 global PIC_CLK
 global PIC_DATA
 global PIC_MCLR
 global PIC_PGM
-#CLK GPIO
-PIC_CLK = 7
 
-#DATA GPIO 
-PIC_DATA = 24
 
-#MCLR GPIO
-PIC_MCLR = 21
+# check CHIP or it is a raspberry Pi
 
-#PGM
-PIC_PGM = 26
+f = open('/proc/cpuinfo','r')
+cpuinfo = f.read()
+f.close()
+
+
+if cpuinfo.find('Allwinner') >0 :
+   #  ------  chip  ------
+   print('C.H.I.P GPIO')
+   import CHIP_IO.GPIO as GPIO
+   GPIO.cleanup()
+   #CLK GPIO
+   PIC_CLK = 'LCD-D15'
+
+   #DATA GPIO 
+   PIC_DATA = 'LCD-D19'
+
+   #MCLR GPIO
+   PIC_MCLR = 'LCD-D21'
+
+   #PGM
+   PIC_PGM = 'LCD-D23'
+
+else:
+   #  ------ Raspberry Pi --
+   print('Raspberry Pi GPIO')
+   import RPi.GPIO as GPIO
+
+   #CLK GPIO
+   PIC_CLK = 7
+
+   #DATA GPIO 
+   PIC_DATA = 24
+
+   #MCLR GPIO
+   PIC_MCLR = 21
+
+   #PGM
+   PIC_PGM = 26
+
+
 
 
 def Setup_Interface():
