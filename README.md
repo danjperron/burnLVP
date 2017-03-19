@@ -28,7 +28,7 @@ burnLVP
 
  
      For Chip there is a modification to do in git://github.com/xtacocorex/CHIP_IO.git
-     You need to unexport gpio before eport in the file  event_gpio.c in the source folder
+     You need to unexport gpio before export in the file  event_gpio.c in the source folder
     
     int gpio_export(int gpio)
     {
