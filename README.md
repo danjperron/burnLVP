@@ -27,3 +27,26 @@ burnLVP
       - RpiPgm.png      Original  schematic to program PIC12F1840 via Raspberry Pi GPIO .
 
  
+     For Chip there is a modification to do in git://github.com/xtacocorex/CHIP_IO.git
+     You need to unexport gpio before eport in the file  event_gpio.c in the source folder
+    
+ int gpio_export(int gpio)
+{
+    int fd, len, e_no;
+    char filename[MAX_FILENAME];
+    char str_gpio[80];
+    struct gpio_exp *new_gpio, *g;
+
+    if (DEBUG)
+        printf(" ** gpio_export **\n");
+
+   // verify if it is already exported
+   // if it is ! unexport firt
+   // djp  March 18,2017
+   snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d", gpio);BUF2SMALL(filename);
+   fd = open(filename,O_RDONLY);
+   if(fd >=0)
+   {
+     close(fd);
+     gpio_unexport(gpio);
+   }
