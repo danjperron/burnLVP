@@ -26,29 +26,47 @@ burnLVP
 
       - RpiPgm.png      Original  schematic to program PIC12F1840 via Raspberry Pi GPIO .
 
- 
-     For Chip there is a modification to do in git://github.com/xtacocorex/CHIP_IO.git
-     You need to unexport gpio before export in the file  event_gpio.c in the source folder
-    
-    int gpio_export(int gpio)
-    {
-    int fd, len, e_no;
-    char filename[MAX_FILENAME];
-    char str_gpio[80];
-    struct gpio_exp *new_gpio, *g;
+P.S.  You will need python2.7 and intelhex modules
 
-    if (DEBUG)
-        printf(" ** gpio_export **\n");
 
-    // verify if it is already exported
-    // if it is ! unexport firt
-    // djp  March 18,2017
-    snprintf(filename, sizeof(filename), "/sys/class/gpio/gpio%d", gpio);BUF2SMALL(filename);
-    fd = open(filename,O_RDONLY);
-    if(fd >=0)
-    {
-     close(fd);
-     gpio_unexport(gpio);
-    }
-    ...
-   
+     For the chip cpu just follow these instructionx
+     
+     sudo apt-get update
+     sudo apt-get install git
+     sudo apt-get install python
+     sudo apt-get install python-dev python-pip
+     sudo pip install intelhex
+     git clone https://github.com/danjperron/burnLVP
+     sudo apt-get install build-essential
+     git clone git://github.com/xtacocorex/CHIP_IO.git
+     
+     And now you are able to program
+     ex: 
+      chip@chip:~$ git clone https://github.com/danjperron/RS485switch
+      Clonage dans 'RS485switch'...
+      remote: Counting objects: 18, done.
+      remote: Total 18 (delta 0), reused 0 (delta 0), pack-reused 18
+      Dépaquetage des objets: 100% (18/18), fait.
+      Vérification de la connectivité... fait.
+      chip@chip:~$ cd burnLVP
+      chip@chip:~/burnLVP$ sudo python burnLVPx.py ~/RS485switch/rs485switch.hex 
+      [sudo] password for chip: 
+      C.H.I.P GPIO
+      File " /home/chip/RS485switch/rs485switch.hex " loaded
+      Scan CPU 
+      Check PIC12/16...
+      Cpu Id   = 0x0
+      Revision =  0x4
+      Found  PIC12F1840 from Cpu Family  PIC12/16
+      Cpu Id: 0x1b80  revision: 4
+      Bulk Erase Program , Data. .... done.
+      Program blank check................................Passed!
+      Data Blank check........Passed!
+      Writing Program................................Done.
+      Program check ................................Passed!
+      Writing Data Done.
+      Data check  Passed!
+      Writing Config..Done.
+      Config Check..Passed!
+      Program verification passed!
+      chip@chip:~/burnLVP$
