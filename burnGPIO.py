@@ -62,8 +62,11 @@ else:
    PIC_PGM = 26
 
 
+# Because the current CHIP_IO python module function setup()
+# can't be used more than once. I create a class to go around
+# and use the function direction() which doesn't exist on the Raspberry Pi
+   
 class MyGPIO:
-
 
     def __init__(self, gpio):
         self.BOARD = gpio.BOARD
