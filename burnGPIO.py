@@ -14,6 +14,10 @@ global PIC_DATA
 global PIC_MCLR
 global PIC_PGM
 
+global isCHIP
+
+
+isCHIP=False
 
 # check CHIP or it is a raspberry Pi
 
@@ -25,8 +29,9 @@ f.close()
 if cpuinfo.find('Allwinner') >0 :
    #  ------  chip  ------
    print('C.H.I.P GPIO')
-   import CHIP_IO.GPIO as GPIO
-   GPIO.cleanup()
+   isCHIP=True
+   import CHIP_IO.GPIO as MGPIO
+   MGPIO.cleanup()
    #CLK GPIO
    PIC_CLK = 'LCD-D15'
 
@@ -42,7 +47,7 @@ if cpuinfo.find('Allwinner') >0 :
 else:
    #  ------ Raspberry Pi --
    print('Raspberry Pi GPIO')
-   import RPi.GPIO as GPIO
+   import RPi.GPIO as MGPIO
 
    #CLK GPIO
    PIC_CLK = 7
@@ -57,16 +62,45 @@ else:
    PIC_PGM = 26
 
 
+class MyGPIO:
 
+
+    def __init__(self, gpio):
+        self.BOARD = gpio.BOARD
+        self.OUT   = gpio.OUT
+        self.IN    = gpio.IN
+        self.gpio  = gpio
+    
+    def setup(self, pin, INOUT):
+        if isCHIP:
+            self.gpio.direction(pin,INOUT)
+        else:
+            self.gpio.setup(pin,INOUT)
+            
+    def setwarnings(self, flag):
+        self.gpio.setwarnings(flag)
+
+    def setmode(self , mode):
+        if not isCHIP:
+           self.gpio.setmode(GPIO.BOARD)
+     
+    def output(self, pin , value):
+        self.gpio.output(pin,value)
+
+    def input(self, pin):
+        return self.gpio.input(pin)
+
+    
+GPIO = MyGPIO(MGPIO)
 
 def Setup_Interface():
   GPIO.setwarnings(False)
   GPIO.setmode(GPIO.BOARD)
-  GPIO.setup(PIC_MCLR,GPIO.OUT)
-  GPIO.output(PIC_MCLR,False)
-  GPIO.setup(PIC_CLK,GPIO.OUT)
-  GPIO.setup(PIC_DATA,GPIO.OUT)
-  GPIO.setup(PIC_PGM,GPIO.OUT)
+  MGPIO.setup(PIC_MCLR,GPIO.OUT)
+  MGPIO.output(PIC_MCLR,False)
+  MGPIO.setup(PIC_CLK,GPIO.OUT)
+  MGPIO.setup(PIC_DATA,GPIO.OUT)
+  MGPIO.setup(PIC_PGM,GPIO.OUT)
   
 
 
