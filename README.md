@@ -26,7 +26,7 @@ burnLVP
      Schematic
 
       - RpiPgm.png      Original  schematic to program PIC12F1840 via Raspberry Pi GPIO .
-      - PIC16F88_5V_HowToConnect    shcematic on how to program pic16F88 on LVP with 5V supply
+      - PIC16F88_5V_HowToConnect.jpg    shcematic on how to program pic16F88 on LVP with 5V supply
 
 P.S.  You will need python2.7 and intelhex modules
 
