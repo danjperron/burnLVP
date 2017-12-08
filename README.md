@@ -20,11 +20,13 @@ burnLVP
       - CpuPIC18F2XXX   PIC18F2XXX Class (like PIC18F2580)
       - CpuPIC18FXXK80  PIC18FXXK80 Class (like PIC18F26K80)
       - CpuPIC18F2_4XK22 PIC18F2_4XK22 Class thanks to Pascal Sandrez
+      - CpuPIC16F8X     PIC16F8X Class (PIC16F87,PIC16F88)
       - burnGPIO.py     IO interface to quickly change type  of IO. (PC , USB, etc..)
 
      Schematic
 
       - RpiPgm.png      Original  schematic to program PIC12F1840 via Raspberry Pi GPIO .
+      - PIC16F88_5V_HowToConnect    shcematic on how to program pic16F88 on LVP with 5V supply
 
 P.S.  You will need python2.7 and intelhex modules
 
