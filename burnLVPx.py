@@ -73,12 +73,14 @@ from CpuPIC18FXX2  import PIC18FXX2
 from CpuPIC18F2XXX import PIC18F2XXX
 from CpuPIC18FXXK80 import PIC18FXXK80
 from CpuPIC18F2_4XK22 import PIC18F2_4XK22
+from CpuPIC16F8X   import PIC16F8X
 pic12     = PIC12()
 pic18fxx2 = PIC18FXX2()
 pic18f2xxx = PIC18F2XXX()
 pic18fxxk80 = PIC18FXXK80()
 pic18f2_4xk22 = PIC18F2_4XK22()
-AllCpuFamily = [pic12,pic18fxx2,pic18f2xxx,pic18fxxk80,pic18f2_4xk22]
+pic16f8x = PIC16F8X()
+AllCpuFamily = [pic12,pic18fxx2,pic18f2xxx,pic18fxxk80,pic18f2_4xk22,pic16f8x]
 
 #=============  main ==========
 

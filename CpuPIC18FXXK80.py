@@ -5,7 +5,7 @@
 #  Class to program PIC18FXXK80 family
 #
 #
-#  class PIC18FXXK80 
+#  class PIC18FXXK80
 #  inherit from class PIC18F
 #
 # N.B. line PGM is not needed! Use the MCLR with magic number
@@ -49,7 +49,7 @@ import burnGPIO as IO
 from time import sleep
 import sys, termios, atexit
 from intelhex import IntelHex
-from select import select   
+from select import select
 from  CpuPIC18F import PIC18F
 
 class PIC18FXXK80(PIC18F):
@@ -79,14 +79,14 @@ class PIC18FXXK80(PIC18F):
              }
 
   PicFamily = 'PIC18FXXK80'
- 
+
 
   def SendMagic(self):
     magic = 0x4d434850
-    
+
     #MSB FIRST
     IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
-    
+
     for loop in range(32):
       f = (magic & 0x80000000) == 0x80000000
 #      if f:
@@ -116,7 +116,8 @@ class PIC18FXXK80(PIC18F):
      sleep(0.1)
      _byte1 = self.ReadMemory(0x3ffffe)
      _byte2 = self.ReadMemoryNext()
-     print "IdTag ", hex(_byte1), ",", hex(_byte2)
+     if (_byte1 != 255) or ( _byte2 != 255):
+       print "IdTag ", hex(_byte1), ",", hex(_byte2)
 
   def Release_LVP(self):
      #just keep it on reset
@@ -189,16 +190,16 @@ class PIC18FXXK80(PIC18F):
     self.LoadCode(0x8E7F)
     self.LoadCode(0x9C7F)
     self.LoadCode(0x847F)
-    
+
 
     #create a buffer to hold program code
     WordCount = self.WriteBufferSize/2
     wbuffer = [0xffff] * WordCount
-    
+
     #ok load until all code is written
 
     for l in range(0,self.ProgramSize, self.WriteBufferSize):
-      
+
       BlankFlag= True
       #get all buffer and check if they are all blank
       for i in range(WordCount):
@@ -209,28 +210,21 @@ class PIC18FXXK80(PIC18F):
       #if they are all blank just skip it
       if BlankFlag:
         continue
-      
+
       #ok let's write the buffer
       self.LoadMemoryAddress(l)
       for i in range(WordCount-1):
         self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2,wbuffer[i])
       self.LoadCommandWord(self.C_PIC18_START_PGM,wbuffer[WordCount-1])
-     
-      #and wait 
+
+      #and wait
       self.WriteAndWait()
       if (l % 1024) == 0:
         sys.stdout.write('.')
         sys.stdout.flush()
     #disable write
-    self.LoadCode(0x947F) 
+    self.LoadCode(0x947F)
     print "Done!"
-
-         
-
-
-
-
-       
 
 
   def  DataBurn(self,pic_data):
@@ -251,7 +245,7 @@ class PIC18FXXK80(PIC18F):
       self.LoadCode(0x0e00 | Value)
       self.LoadCode(0x6E73)
       #enable memory writes
-      self.LoadCode(0x847F) 
+      self.LoadCode(0x847F)
       #Initiate write
       self.LoadCode(0x827F)
       #Poll WR bit until bit is clear
@@ -285,9 +279,9 @@ class PIC18FXXK80(PIC18F):
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+2))
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+4))
     self.LoadCommandWord(self.C_PIC18_START_PGM, self.SearchWordValue(pic_data,self.IDBase+6))
-    self.WriteConfig()   
+    self.WriteConfig()
     print " ... Done!"
-    return  
+    return
 
 
   ConfigMask = [0x5d, 0xdf, 0x7F, 0x7f, 0, 0x8f, 0x91,0, 0x0f, 0xC0, 0x0F, 0xE0, 0x0f, 0x40]
@@ -333,7 +327,7 @@ class PIC18FXXK80(PIC18F):
     self.LoadCode(0x947F)
     print " ... Done!"
 
-    
+
 
   def ConfigCheck(self,pic_data):
     print "Config Check ",
