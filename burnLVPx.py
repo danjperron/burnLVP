@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ################################
 #
@@ -18,7 +18,7 @@
 #
 #
 #
-#  18 Sept. update   
+#  18 Sept. update
 #                   Bulk Erase works with adafruit level converter if power is 4.5 V
 #                   Code erase function working
 #                   Code blank check working
@@ -59,7 +59,7 @@
 
 import sys, termios, atexit
 from intelhex import IntelHex
-from select import select   
+from select import select
 
 #=======   I/O interface
 import burnGPIO as IO
@@ -91,7 +91,7 @@ if __name__ == '__main__':
   elif len(sys.argv) is 1:
     HexFile = ''
   else:
-    print 'Usage: %s file.hex' % sys.argv[0]
+    print('Usage: %s file.hex' % sys.argv[0])
     quit()
 
 
@@ -101,25 +101,25 @@ if len(HexFile) > 0 :
    try:
      FileData.loadhex(HexFile)
    except IOError:
-     print 'Error in file "', HexFile, '"'
+     print('Error in file "', HexFile, '"')
      quit()
 
 PicData = FileData.todict()       
-print 'File "', HexFile, '" loaded'
+print('File "', HexFile, '" loaded')
 
 
 #try to figure out the CpuId by scanning all available Cpu family
 IO.Setup_Interface()
 
 CpuId=0
-print "Scan CPU "
+print("Scan CPU ")
 
 for l in AllCpuFamily:
   CpuTag = l.ScanCpuTag()
   if(CpuTag!=0):
     #found the correct cpu
-    print "Cpu Id   =", hex(l.CpuId)
-    print "Revision = ", hex(l.CpuRevision)
+    print("Cpu Id   =", hex(l.CpuId))
+    print("Revision = ", hex(l.CpuRevision))
     #ok set the cpu family who find the cpu
     CpuF=l
     break;
@@ -127,7 +127,7 @@ for l in AllCpuFamily:
     l.Release_LVP() 
 
 if CpuTag == 0:
-  print " Unable to identify cpu type"
+  print(" Unable to identify cpu type")
   quit()
 
 #now let's find the Cpu Family
@@ -136,14 +136,14 @@ CpuInfo=None
 for l in AllCpuFamily:
   CpuInfo = l.FindCpu(CpuTag)
   if CpuInfo != None:
-    print "Found ", CpuInfo[0], "from Cpu Family ",l.PicFamily
-    print "Cpu Id:", hex(l.CpuId), " revision:", l.CpuRevision 
+    print("Found ", CpuInfo[0], "from Cpu Family ",l.PicFamily)
+    print("Cpu Id:", hex(l.CpuId), " revision:", l.CpuRevision) 
     CpuF = l
     break;
 
 if CpuInfo==None:
-  print "Unable to continue... Unable to handle this cpu"
-  print "Cpu Id:", hex(CpuTag & 0xFFE0)
+  print("Unable to continue... Unable to handle this cpu")
+  print("Cpu Id:", hex(CpuTag & 0xFFE0))
   CpuF.Release_LVP()
   quit()
 
@@ -168,7 +168,7 @@ if CpuF.ProgramBlankCheck():
          if CpuF.IDCheck(PicData):
            CpuF.ConfigBurn(PicData)
            if CpuF.ConfigCheck(PicData):
-             print "Program verification passed!" 
+             print("Program verification passed!")
 
 #release LVP and force reset
 #CpuF.MemoryDump(CpuF.ConfigBase,14)

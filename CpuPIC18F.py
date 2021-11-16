@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ################################
 #
@@ -232,7 +232,7 @@ class PIC18F:
 
 
   def ScanCpuTag(self):
-   print "check ", self.PicFamily, "..."
+   print("check ", self.PicFamily, "...")
    self.Set_LVP()
    _Byte1 = self.ReadMemory(0x3ffffe)
    _Byte2 = self.ReadMemoryNext()
@@ -250,7 +250,7 @@ class PIC18F:
       Value = self.ReadMemoryNext()
       TargetValue = self.SearchByteValue(pic_data,l + MemoryBase)
       if(Value != TargetValue):
-        print "  **** Address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value)
+        print("  **** Address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value))
         return False
       if (l % 1024)==0 :
         sys.stdout.write('.')
@@ -259,30 +259,30 @@ class PIC18F:
 
 
   def IDCheck(self,pic_data):
-     print "ID Check ",
+     print("ID Check ",end='')
      if self.MemoryCheck(pic_data,self.IDBase,self.IDSize):
-       print " ... Passed!"
+       print(" ... Passed!")
        return True
      return False
 
 
    
   def ProgramBlankCheck(self):
-    print "Program code [", self.ProgramSize,"] blank check",
+    print("Program code [", self.ProgramSize,"] blank check",end='')
     self.LoadMemoryAddress(0)
     for l in range (self.ProgramSize):
       Value = self.ReadMemoryNext()
       if(Value != 0xff):
-        print "*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!"
+        print("*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!")
         return False
       if (l % 1024)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-    print "Passed!"
+    print("Passed!")
     return True
 
   def DataBlankCheck(self):
-    print "EEPROM DATA[",self.DataSize,"] Blank Check ",
+    print("EEPROM DATA[",self.DataSize,"] Blank Check ",end='')
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -300,14 +300,14 @@ class PIC18F:
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue= self.ReadData()
       if RValue != 0xff :
-        print "  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue)
+        print("  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue))
         return False
-    print "Done!"
+    print("Done!")
     return True
 
 
   def DataCheck(self,pic_data):
-    print "EEPROM DATA[",self.DataSize,"]  Check ",
+    print("EEPROM DATA[",self.DataSize,"]  Check ",end='')
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -326,9 +326,9 @@ class PIC18F:
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue= self.ReadData()
       if Value != RValue :
-        print "  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue)
+        print("  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue))
         return False
-    print "Done!"
+    print("Done!")
     return True
 
 
@@ -336,25 +336,25 @@ class PIC18F:
 
 
   def ProgramCheck(self,pic_data):
-    print "Program check ",
+    print("Program check ",end='')
     if self.MemoryCheck(pic_data,self.ProgramBase, self.ProgramSize):
-      print "Passed!"
+      print("Passed!")
       return True
     return False
 
   def MemoryDump(self,dump_base,dump_size):
-    print ""
-    print "----- MEMORY DUMP -----  BASE=", hex(dump_base)
+    print("")
+    print("----- MEMORY DUMP -----  BASE=", hex(dump_base))
     self.LoadCode(0)
     self.LoadMemoryAddress(dump_base)
     for l in range (dump_size):
       self.LoadMemoryAddress(dump_base+l)
       Value = self.ReadMemoryNext()
       if (l % 32) == 0:
-       print format(l,'04x'), ":" ,
+        print(format(l,'04x'), ":" ,end='')
       else:
         if (l % 4) == 0:
-          print "-",
-      print format(Value,'02X'),
+          print("-",end='')
+      print(format(Value,'02X'),end='')
       if (l % 32) == 31:
-       print " "
+       print(" ")

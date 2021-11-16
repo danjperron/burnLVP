@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ################################
 #
@@ -74,7 +74,7 @@ class PIC18FXX2(PIC18F):
 
 
   def BulkErase(self):
-    print "Bulk Erase ",
+    print("Bulk Erase ",end='')
     self.LoadCode(0x8EA6)
     self.LoadCode(0x8CA6)
     self.LoadCode(0x86A6)
@@ -84,12 +84,12 @@ class PIC18FXX2(PIC18F):
     self.LoadCommand(self.C_PIC18_NOP)
     sleep(0.015)
     self.LoadWord(0)
-    print "..... Done!"
+    print("..... Done!")
 
 
 #Multi Panel code programming
   def ProgramBurn(self, pic_data):
-    print "Writing Program",
+    print("Writing Program",end='')
     NumberOfPanel = self.ProgramSize / self.PanelSize 
     self.LoadCode(0x8EA6)
     self.LoadCode(0x8CA6)
@@ -122,7 +122,7 @@ class PIC18FXX2(PIC18F):
       if (CountIdx % 256)==0:
         sys.stdout.write('.')
         sys.stdout.flush()
-    print "Done!"
+    print("Done!")
 
 
 
@@ -131,7 +131,7 @@ class PIC18FXX2(PIC18F):
 
 
   def  DataBurn(self,pic_data):
-    print "Writing EEPROM data[",self.DataSize,"]",
+    print("Writing EEPROM data[",self.DataSize,"]",end="")
     #direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -165,11 +165,11 @@ class PIC18FXX2(PIC18F):
         if (EECON1 & 2) == 0:
           break
       self.LoadCode(0x94A6)
-    print "Done!"
+    print("Done!")
 
 
   def DataEepromCheckPic18(self,pic_data):
-    print "EEROM Data Check",
+    print("EEROM Data Check",end='')
     #Direct access to data EEPROM
     LoadCode(0x9EA6)
     LoadCode(0x9CA6)
@@ -188,15 +188,15 @@ class PIC18FXX2(PIC18F):
       LoadCommandPic18(C_PIC18_TABLAT)
       RValue= ReadDataPic18()
       if Value != RValue :
-        print "  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue)
+        print("  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue))
         return False
-    print "Done!"
+    print("Done!")
     return True
    
 
 
   def IDBurn(self,pic_data):
-    print "Writing ID",
+    print("Writing ID",end='')
     #direct access config memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x8CA6)
@@ -213,13 +213,13 @@ class PIC18FXX2(PIC18F):
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+4))
     self.LoadCommandWord(self.C_PIC18_START_PGM, self.SearchWordValue(pic_data,self.IDBase+6))
     self.WriteAndWait()   
-    print " ... Done!"
+    print(" ... Done!")
     return  
 
 #  def IDCheck(self,pic_data):
-#     print "ID Check ",
+#     print("ID Check ",
 #     if MemoryCheck(pic_data,self.IDBase,self.IDSize):
-#       print " ... Passed!"
+#       print(" ... Passed!"
 #       return True  
 #     return False
    
@@ -239,7 +239,7 @@ class PIC18FXX2(PIC18F):
    
 
   def ConfigBurn(self,pic_data):
-    print "CONFIG Burn",
+    print("CONFIG Burn",end='')
     self.AnalyzeConfig(pic_data)
     #burn all config but CONFIG6 last because of WRTC
     for l in range(5)+[6,5]:
@@ -257,12 +257,12 @@ class PIC18FXX2(PIC18F):
       self.LoadCode(0x2AF6)
       self.LoadCommandWord(self.C_PIC18_START_PGM,self.ConfigMirror[l])
       self.WriteAndWait()
-    print " ... Done!"
+    print(" ... Done!")
     
    
 
   def ConfigCheck(self,pic_data):
-    print "Config Check ",
+    print("Config Check ",end='')
     self.AnalyzeConfig(pic_data)
     self.LoadMemoryAddress(self.ConfigBase)
     for l in range (14):
@@ -272,12 +272,12 @@ class PIC18FXX2(PIC18F):
       else:
          TargetValue = (self.ConfigMirror[l/2] >> 8) & 0xff
       if(Value != TargetValue):
-        print "  **** Address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value)
+        print("  **** Address ", hex(l), " write  ", hex(TargetValue), " read" , hex(Value))
         return False
       if (l % 1024)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-    print " ... Passed!"
+    print(" ... Passed!")
     return True
 
 

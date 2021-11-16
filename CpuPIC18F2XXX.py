@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ################################
 #
@@ -126,7 +126,7 @@ class PIC18F2XXX(PIC18F):
  
 
   def BulkErase(self):
-    print "Bulk Erase ",
+    print("Bulk Erase ",end='')
     #write 3F3FH to 3C0005H
     self.LoadMemoryAddress(0x3C0005)
     self.LoadCommandWord(self.C_PIC18_WRITE,0x3F3F)
@@ -138,12 +138,12 @@ class PIC18F2XXX(PIC18F):
     #wait 12 ms
     sleep(0.012)
     self.LoadWord(0)
-    print "..... Done!"
+    print("..... Done!")
 
 
 
   def ProgramBurn(self, pic_data):
-    print "Writing Program",
+    print("Writing Program",end='')
     #Direct access to code memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x9CA6)
@@ -178,12 +178,12 @@ class PIC18F2XXX(PIC18F):
       if (l % 1024) == 0:
         sys.stdout.write('.')
         sys.stdout.flush()
-    print "Done!"
+    print("Done!")
 
          
 
   def DataBlankCheck(self):
-    print "EEPROM DATA[",self.DataSize,"] Blank Check ",
+    print("EEPROM DATA[",self.DataSize,"] Blank Check ",end='')
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -202,14 +202,14 @@ class PIC18F2XXX(PIC18F):
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue= self.ReadData()
       if RValue != 0xff :
-        print "  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue)
+        print("  *** EEPROM DATA  address ", hex(l), " not blank!  read" , hex(RValue))
         return False
-    print "Done!"
+    print("Done!")
     return True
 
 
   def DataCheck(self,pic_data):
-    print "EEPROM DATA[",self.DataSize,"]  Check ",
+    print("EEPROM DATA[",self.DataSize,"]  Check ",end='')
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -229,16 +229,16 @@ class PIC18F2XXX(PIC18F):
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue= self.ReadData()
       if Value != RValue :
-        print "  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue)
+        print("  *** EEROM  address ", hex(l), " write  ", hex(Value), " read" , hex(RValue))
         return False
-    print "Done!"
+    print("Done!")
     return True
 
        
 
 
   def  DataBurn(self,pic_data):
-    print "Writing EEPROM data[",self.DataSize,"]",
+    print("Writing EEPROM data[",self.DataSize,"]",end='')
     #direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -272,14 +272,14 @@ class PIC18F2XXX(PIC18F):
 
       #disable write
       self.LoadCode(0x94A6)
-    print "Done!"
+    print("Done!")
 
 
 
 
 
   def IDBurn(self,pic_data):
-    print "Writing ID",
+    print("Writing ID",end='')
     #direct access config memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x8CA6)
@@ -296,12 +296,12 @@ class PIC18F2XXX(PIC18F):
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+4))
     self.LoadCommandWord(self.C_PIC18_START_PGM, self.SearchWordValue(pic_data,self.IDBase+6))
     self.WriteAndWait()   
-    print " ... Done!"
+    print(" ... Done!")
     return  
 
   ConfigMask = [0x3F, 0xCF, 0x3F, 0x1F, 0, 0x87, 0xfd,0, 0x3F, 0xc0, 0x3F, 0xE0, 0x3F, 0x40] 
   def ConfigBurn(self,pic_data):
-    print "CONFIG Burn",
+    print("CONFIG Burn",end='')
     #direct access config memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x8CA6)
@@ -326,11 +326,11 @@ class PIC18F2XXX(PIC18F):
       self.LoadCommandWord(self.C_PIC18_START_PGM,TargetValue)
       self.WriteAndWait()
     self.LoadCode(0x94A6)
-    print " ... Done!"
+    print(" ... Done!")
 
   
   def ConfigCheck(self,pic_data):
-    print "Config Check ",
+    print("Config Check ",end='')
     self.LoadMemoryAddress(self.ConfigBase)
     for l in range (14):
       Value = self.ReadMemoryNext()
@@ -347,12 +347,12 @@ class PIC18F2XXX(PIC18F):
       TargetValue = TargetValue & self.ConfigMask[l]
       Value = Value & self.ConfigMask[l]
       if(Value != TargetValue):
-        print "  **** Address ", hex(l), " write  ", hex(TargetValue), " read", hex(Value)
+        print("  **** Address ", hex(l), " write  ", hex(TargetValue), " read", hex(Value))
         return False
       if (l % 1024)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-    print " ... Passed!"
+    print(" ... Passed!")
     return True
  
 

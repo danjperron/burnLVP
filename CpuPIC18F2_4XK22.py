@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ################################
 #
@@ -108,7 +108,7 @@ class PIC18F2_4XK22(PIC18F):
      sleep(0.001) # P15 = 400us min
      _byte1 = self.ReadMemory(0x3ffffe)
      _byte2 = self.ReadMemoryNext()
-     print "IdTag ", hex(_byte1), ",", hex(_byte2)
+     print("IdTag ", hex(_byte1), ",", hex(_byte2))
 
 
   def Release_LVP(self):
@@ -119,7 +119,7 @@ class PIC18F2_4XK22(PIC18F):
 
 
   def BulkErase(self):
-    print "Bulk Erase ",
+    print("Bulk Erase ",end='')
     #erase full chip
     self.LoadMemoryAddress(0x3C0005)
     self.LoadCommandWord(self.C_PIC18_WRITE,0x0f0f)
@@ -129,11 +129,11 @@ class PIC18F2_4XK22(PIC18F):
     self.LoadCommand(self.C_PIC18_NOP)
     sleep(0.016) # P10 (200us) + P11 (15ms)
     self.LoadWord(0)
-    print "..... Done!"
+    print("..... Done!")
 
 
   def ProgramBurn(self, pic_data):
-    print "Writing Program BufferSize = ",self.WriteBufferSize, 
+    print("Writing Program BufferSize = ",self.WriteBufferSize,end='')
     #Direct access to code memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x9CA6)
@@ -170,11 +170,11 @@ class PIC18F2_4XK22(PIC18F):
         sys.stdout.flush()
     #disable write
     self.LoadCode(0x94A6) 
-    print "Done!"
+    print("Done!")
 
 
   def DataBurn(self,pic_data):
-    print "Writing EEPROM data [",self.DataSize,"]",
+    print("Writing EEPROM data [",self.DataSize,"]",end='')
     #direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -210,11 +210,11 @@ class PIC18F2_4XK22(PIC18F):
 #      sleep(0.0001)
       #disable write
       self.LoadCode(0x94A6)
-    print "Done!"
+    print("Done!")
 
 
   def IDBurn(self,pic_data):
-    print "Writing ID",
+    print("Writing ID",end='')
     #direct access config memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x9CA6)
@@ -226,7 +226,7 @@ class PIC18F2_4XK22(PIC18F):
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+4))
     self.LoadCommandWord(self.C_PIC18_START_PGM, self.SearchWordValue(pic_data,self.IDBase+6))
     self.WriteConfig()   
-    print " ... Done!"
+    print(" ... Done!")
     return  
 
               # 0     1     2     3     4     5     6     7     8     9     A     B     C     D
@@ -248,7 +248,7 @@ class PIC18F2_4XK22(PIC18F):
 
 
   def ConfigBurn(self,pic_data):
-    print "Config Burn",
+    print("Config Burn",end='')
     #direct access config memory
     self.LoadCode(0x8EA6)
     self.LoadCode(0x8CA6)
@@ -271,11 +271,11 @@ class PIC18F2_4XK22(PIC18F):
       self.LoadCommandWord(self.C_PIC18_START_PGM,TargetValue)
       self.WriteConfig()
     self.LoadCode(0x947F)
-    print " ... Done!"
+    print(" ... Done!")
 
 
   def ConfigCheck(self,pic_data):
-    print "Config Check ",
+    print("Config Check ",end='')
     self.LoadMemoryAddress(self.ConfigBase)
     for l in range (14):
       Value = self.ReadMemoryNext()
@@ -289,12 +289,12 @@ class PIC18F2_4XK22(PIC18F):
       TargetValue = TargetValue & self.ConfigMask[l]
       Value = Value & self.ConfigMask[l]
       if(Value != TargetValue):
-        print "  **** Config check error address ", hex(l), " write ", hex(TargetValue), " read" , hex(Value)
+        print("  **** Config check error address ", hex(l), " write ", hex(TargetValue), " read" , hex(Value))
         return False
       if (l % 1024)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-    print " ... Passed!"
+    print(" ... Passed!")
     return True
 
 
@@ -306,7 +306,7 @@ class PIC18F2_4XK22(PIC18F):
 
 
   def DataBlankCheck(self):
-    print "EEPROM Data [",self.DataSize,"] Blank Check ",
+    print("EEPROM Data [",self.DataSize,"] Blank Check ",end='')
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -325,14 +325,14 @@ class PIC18F2_4XK22(PIC18F):
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue = self.ReadData()
       if RValue != 0xff :
-        print "  *** EEPROM Data blank check error address ", hex(l), " not blank! read" , hex(RValue)
+        print("  *** EEPROM Data blank check error address ", hex(l), " not blank! read" , hex(RValue))
         return False
-    print "Done!"
+    print("Done!")
     return True
 
 
   def DataCheck(self,pic_data):
-    print "EEPROM DATA [",self.DataSize,"] Check ",
+    print("EEPROM DATA [",self.DataSize,"] Check ",end='')
     #Direct access to data EEPROM
     self.LoadCode(0x9EA6)
     self.LoadCode(0x9CA6)
@@ -352,9 +352,9 @@ class PIC18F2_4XK22(PIC18F):
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue = self.ReadData()
       if Value != RValue :
-        print "  *** EEPROM DATA check error address ", hex(l), " write ", hex(Value), " read" , hex(RValue)
+        print("  *** EEPROM DATA check error address ", hex(l), " write ", hex(Value), " read" , hex(RValue))
         return False
-    print "Done!"
+    print("Done!")
     return True
 
 

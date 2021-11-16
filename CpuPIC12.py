@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 ################################
 #
@@ -115,7 +115,7 @@ class PIC12:
     IO.GPIO.output(IO.PIC_CLK, False)
     #MCLR LOW 
     IO.GPIO.output(IO.PIC_DATA, False)
-#    print "LVP ON"
+#    print("LVP ON")
     IO.GPIO.output(IO.PIC_MCLR, False)
     sleep(0.3)
 
@@ -124,7 +124,7 @@ class PIC12:
     IO.GPIO.output(IO.PIC_MCLR, True)
     sleep(0.1)
     IO.GPIO.output(IO.PIC_MCLR, False)
-#    print "LVP OFF"
+#    print("LVP OFF")
 
   def SendMagic(self):
     magic = 0x4d434850
@@ -177,53 +177,53 @@ class PIC12:
 
 
   def BulkErase(self):
-    print "Bulk Erase Program",
+    print("Bulk Erase Program",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     self.SendCommand(self.C_LOAD_CONFIG)
     self.LoadWord(0x3fff)
     self.SendCommand(self.C_BULK_ERASE_PROGRAM)
     sleep(0.1)
-    print ", Data.",
+    print(", Data.",end='')
     self.SendCommand(self.C_BULK_ERASE_DATA)
     sleep(0.1)
-    print ".... done."
+    print(".... done.")
 
 
   def ProgramBlankCheck(self):
-    print "Program blank check",
+    print("Program blank check",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.ProgramSize):
       self.SendCommand(self.C_READ_PROGRAM)
       Value = self.ReadWord()
       if  Value != 0x3fff :
-        print "*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!"
+        print("*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!")
         return False
       if (l % 128)==0 :
        sys.stdout.write('.')
        sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Passed!"
+    print("Passed!")
     return True
 
   def DataBlankCheck(self):
-    print "Data Blank check",
+    print("Data Blank check",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.DataSize):
       self.SendCommand(self.C_READ_DATA)
       Value = self.ReadWord()
       if  Value != 0xff :
-        print "*** CPU eeprom data  at Address ", hex(l), " = ", hex(Value), "Failed!"
+        print("*** CPU eeprom data  at Address ", hex(l), " = ", hex(Value), "Failed!")
         return False
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Passed!"
+    print("Passed!")
     return True
 
 
   def ProgramBurn(self, pic_data):
-    print "Writing Program",
+    print("Writing Program",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.ProgramSize):
       if pic_data.get(l*2+ self.ProgramBase) != None :
@@ -237,17 +237,17 @@ class PIC12:
           self.SendCommand(self.C_READ_PROGRAM)
           RValue = self.ReadWord()
           if Value != RValue :
-            print "Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
       if (l % 128)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Done."
+    print("Done.")
     return True
 
   def DataBurn(self,pic_data):
-    print "Writing Data",
+    print("Writing Data",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range( self.DataSize):
      if pic_data.get(l*2 + self.DataBase) != None :
@@ -260,39 +260,39 @@ class PIC12:
         self.SendCommand(self.C_READ_DATA)
         RValue = self.ReadWord()
         if Value != RValue :
-          print "Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+          print("Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
           return False
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Done."
+    print("Done.")
     return True
 
   def ProgramCheck(self, pic_data):
-    print "Program check ",
+    print("Program check ",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.ProgramSize):
       if pic_data.get(l*2+ self.ProgramBase) != None :
         if pic_data.get(l*2+ self.ProgramBase+1) != None :
           Value = pic_data.get(l*2+ self.ProgramBase) + ( 256 * pic_data.get(l*2+ self.ProgramBase+1))
           Value = Value & 0x3fff
-	  self.SendCommand(self.C_READ_PROGRAM)
+          self.SendCommand(self.C_READ_PROGRAM)
           RValue = self.ReadWord()
           if Value != RValue :
-            print "Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue)
+            print("Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue))
             return False
       if (l % 128)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Passed!"
+    print("Passed!")
     return True
 
 
 
   def DataCheck(self,pic_data):
-    print "Data check ",
+    print("Data check ",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.DataSize):
      if pic_data.get(l*2 + self.DataBase) != None :
@@ -301,18 +301,18 @@ class PIC12:
         self.SendCommand(self.C_READ_DATA)
         RValue = self.ReadWord()
         if Value != RValue :
-           print "Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue)
+           print("Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue))
            return False
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Passed!"
+    print("Passed!")
     return True
 
 
   def ConfigBurn(self,pic_data):
-    print "Writing Config",
+    print("Writing Config",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     self.SendCommand(self.C_LOAD_CONFIG)
     self.LoadWord(0x3fff)
@@ -329,7 +329,7 @@ class PIC12:
           self.SendCommand(self.C_READ_PROGRAM)
           RValue = self.ReadWord()
           if Value != RValue :
-            print "User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -355,12 +355,12 @@ class PIC12:
           self.SendCommand(self.C_READ_PROGRAM)
           RValue = self.ReadWord()
           if Value != RValue :
-            print "Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Done."
+    print("Done.")
     return True
 
 
@@ -380,7 +380,7 @@ class PIC12:
 
 
   def ConfigCheck(self, pic_data):
-    print "Config Check",
+    print("Config Check",end='')
     self.SendCommand(self.C_RESET_ADDRESS)
     self.SendCommand(self.C_LOAD_CONFIG)
     self.LoadWord(0x3fff)
@@ -393,7 +393,7 @@ class PIC12:
           self.SendCommand(self.C_READ_PROGRAM)
           RValue = self.ReadWord()
           if Value != RValue :
-            print "User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -415,12 +415,12 @@ class PIC12:
           self.SendCommand(self.C_READ_PROGRAM)
           RValue = self.ReadWord()
           if Value != RValue :
-            print "Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
       self.SendCommand(self.C_INC_ADDRESS)
-    print "Passed!"
+    print("Passed!")
     self.CheckLVP(pic_data)
     return True
 
@@ -435,7 +435,7 @@ class PIC12:
 
 
   def ScanCpuTag(self):
-    print "Check PIC12/16..."
+    print("Check PIC12/16...")
     self.Set_LVP()
     self.SendMagic()
     self.SendCommand(0)

@@ -1,8 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 ################################
 #
-# burnLVP.py  
+# burnLVP.py
 #
 #
 # Program to burn pic12F1840 using LVP mode with a Rasberry Pi
@@ -45,12 +45,12 @@ from time import sleep
 import RPi.GPIO as GPIO
 import sys, termios, atexit
 from intelhex import IntelHex
-from select import select   
+from select import select
 
 
 #set io pin
 
-#CLK GPIO 4 
+#CLK GPIO 4
 PIC_CLK = 7
 
 #DATA GPIO 8
@@ -89,7 +89,7 @@ PIC16LF1829 = 0x28E0
 
 # command definition
 C_LOAD_CONFIG = 0
-C_LOAD_PROGRAM = 2 
+C_LOAD_PROGRAM = 2
 C_LOAD_DATA   =  3
 C_READ_PROGRAM = 4
 C_READ_DATA    = 5
@@ -105,11 +105,11 @@ def Release_VPP():
    GPIO.setup(PIC_DATA, GPIO.IN)
    GPIO.setup(PIC_CLK,  GPIO.IN)
    GPIO.output(PIC_MCLR, False)
-   print "VPP OFF"
+   print("VPP OFF")
 
 
 def Set_VPP():
-   print "VPP OFF"
+   print("VPP OFF")
    #held MCLR Low
    GPIO.setup(PIC_MCLR,GPIO.OUT)
    GPIO.output(PIC_MCLR,False)
@@ -117,11 +117,11 @@ def Set_VPP():
    #ok PIC_CLK=out& HIGH, PIC_DATA=out & LOW
    GPIO.setup(PIC_CLK, GPIO.OUT)
    GPIO.output(PIC_CLK,False)
- 
-   #MCLR LOW 
+
+   #MCLR LOW
    GPIO.setup(PIC_DATA, GPIO.OUT)
    GPIO.output(PIC_DATA,False)
-   print "VPP ON"
+   print("VPP ON")
    GPIO.output(PIC_MCLR,True)
    sleep(0.1)
 
@@ -134,10 +134,10 @@ def Set_LVP():
    GPIO.setup(PIC_CLK, GPIO.OUT)
    GPIO.output(PIC_CLK,False)
 
-   #MCLR LOW 
+   #MCLR LOW
    GPIO.setup(PIC_DATA, GPIO.OUT)
    GPIO.output(PIC_DATA,False)
-   print "LVP ON"
+   print("LVP ON")
    GPIO.output(PIC_MCLR,False)
    sleep(0.3)
 
@@ -145,7 +145,7 @@ def Release_LVP():
    GPIO.setup(PIC_DATA,GPIO.IN)
    GPIO.setup(PIC_CLK,GPIO.IN)
    GPIO.output(PIC_MCLR,True)
-   print "LVP OFF"
+   print("LVP OFF")
 
 def SendMagic():
    magic = 0x4d434850
@@ -183,7 +183,7 @@ def ReadWord():
       pass
     Value = (Value >> 1) & 0x3FFF;
     return Value;
-        
+
 
 def LoadWord(Value):
   GPIO.setup(PIC_DATA,GPIO.OUT)
@@ -199,53 +199,53 @@ def LoadWord(Value):
 
 
 def Pic12_BulkErase():
-   print "Bulk Erase Program",
+   print("Bulk Erase Program ",end='')
    SendCommand(C_RESET_ADDRESS)
    SendCommand(C_LOAD_CONFIG)
    LoadWord(0x3fff)
    SendCommand(C_BULK_ERASE_PROGRAM)
    sleep(0.1)
-   print ", Data.",
+   print(", Data.",end='')
    SendCommand(C_BULK_ERASE_DATA)
    sleep(0.1)
-   print ".... done."
+   print(".... done.")
 
 
 def Pic12_ProgramBlankCheck(program_size):
-   print "Program blank check",
+   print("Program blank check ",end='')
    SendCommand(C_RESET_ADDRESS)
    for l in range(program_size):
      SendCommand(C_READ_PROGRAM)
      Value = ReadWord()
      if  Value != 0x3fff :
-       print "*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!"
+       print("*** CPU program at Address ", hex(l), " = ", hex(Value), " Failed!")
        return False
      if (l % 128)==0 :
        sys.stdout.write('.')
        sys.stdout.flush()
      SendCommand(C_INC_ADDRESS)
-   print "Passed!"
+   print("Passed!")
    return True
 
 def Pic12_DataBlankCheck(data_size):
-   print "Data Blank check",
+   print("Data Blank check",end='')
    SendCommand(C_RESET_ADDRESS)
    for l in range(data_size):
      SendCommand(C_READ_DATA)
      Value = ReadWord()
      if  Value != 0xff :
-        print "*** CPU eeprom data  at Address ", hex(l), " = ", hex(Value), "Failed!"
+        print("*** CPU eeprom data  at Address ", hex(l), " = ", hex(Value), "Failed!")
         return False
      if (l % 32)==0 :
        sys.stdout.write('.')
        sys.stdout.flush()
      SendCommand(C_INC_ADDRESS)
-   print "Passed!"
+   print("Passed!")
    return True
 
 
 def Pic12_ProgramBurn(pic_data, program_base, program_size):
-   print "Writing Program",
+   print("Writing Program",end='')
    SendCommand(C_RESET_ADDRESS)
    for l in range( program_size):
       if pic_data.get(l*2+ program_base) != None :
@@ -259,17 +259,17 @@ def Pic12_ProgramBurn(pic_data, program_base, program_size):
           SendCommand(C_READ_PROGRAM)
           RValue = ReadWord()
           if Value != RValue :
-            print "Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
       if (l % 128)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       SendCommand(C_INC_ADDRESS)
-   print "Done."
+   print("Done.")
    return True
 
 def Pic12_DataBurn(pic_data, data_base, data_size):
-   print "Writing Data",
+   print("Writing Data",end='')
    SendCommand(C_RESET_ADDRESS)
    for l in range( data_size):
      if pic_data.get(l*2 + data_base) != None:
@@ -282,39 +282,39 @@ def Pic12_DataBurn(pic_data, data_base, data_size):
         SendCommand(C_READ_DATA)
         RValue = ReadWord()
         if Value != RValue :
-          print "Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+          print("Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
           return False
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       SendCommand(C_INC_ADDRESS)
-   print "Done."
+   print("Done.")
    return True
 
 def Pic12_ProgramCheck(pic_data, program_base, program_size):
-   print "Program check ",
+   print("Program check ",end='')
    SendCommand(C_RESET_ADDRESS)
    for l in range(program_size):
       if pic_data.get(l*2+ program_base) != None :
         if pic_data.get(l*2+ program_base+1) != None :
           Value = pic_data.get(l*2+ program_base) + ( 256 * pic_data.get(l*2+ program_base+1))
           Value = Value & 0x3fff
-	  SendCommand(C_READ_PROGRAM)
+          SendCommand(C_READ_PROGRAM)
           RValue = ReadWord()
           if Value != RValue :
-            print "Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue)
+            print("Program address:", hex(l) , " write ", hex(Value), " read ", hex(RValue))
             return False
       if (l % 128)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       SendCommand(C_INC_ADDRESS)
-   print "Passed!"
+   print("Passed!")
    return True
 
 
 
 def Pic12_DataCheck(pic_data, data_base, data_size):
-   print "Data check ",
+   print("Data check ",end='')
    SendCommand(C_RESET_ADDRESS)
    for l in range(data_size):
      if pic_data.get(l*2 + data_base) != None:
@@ -323,18 +323,18 @@ def Pic12_DataCheck(pic_data, data_base, data_size):
         SendCommand(C_READ_DATA)
         RValue = ReadWord()
         if Value != RValue :
-           print "Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue)
+           print("Data address:", hex(l) , " write ", hex(Value), " read ", hex(RValue))
            return False
       if (l % 32)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
       SendCommand(C_INC_ADDRESS)
-   print "Passed!"
+   print("Passed!")
    return True
 
 
 def Pic12_ConfigBurn(pic_data, config_base):
-   print "Writing Config",
+   print("Writing Config",end='')
    SendCommand(C_RESET_ADDRESS)
    SendCommand(C_LOAD_CONFIG)
    LoadWord(0x3fff)
@@ -351,7 +351,7 @@ def Pic12_ConfigBurn(pic_data, config_base):
           SendCommand(C_READ_PROGRAM)
           RValue = ReadWord()
           if Value != RValue :
-            print "User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -377,16 +377,16 @@ def Pic12_ConfigBurn(pic_data, config_base):
           SendCommand(C_READ_PROGRAM)
           RValue = ReadWord()
           if Value != RValue :
-            print "Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
       SendCommand(C_INC_ADDRESS)
-   print "Done."
+   print("Done.")
    return True
 
 def Pic12_ConfigCheck(pic_data, config_base):
-   print "Config Check",
+   print("Config Check",end='')
    SendCommand(C_RESET_ADDRESS)
    SendCommand(C_LOAD_CONFIG)
    LoadWord(0x3fff)
@@ -399,7 +399,7 @@ def Pic12_ConfigCheck(pic_data, config_base):
           SendCommand(C_READ_PROGRAM)
           RValue = ReadWord()
           if Value != RValue :
-            print "User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("User Id Location:", hex(l) , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
@@ -421,12 +421,12 @@ def Pic12_ConfigCheck(pic_data, config_base):
           SendCommand(C_READ_PROGRAM)
           RValue = ReadWord()
           if Value != RValue :
-            print "Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!"
+            print("Config Word ", l-6 , " write ", hex(Value), " read ", hex(RValue), " Failed!")
             return False
         sys.stdout.write('.')
         sys.stdout.flush()
       SendCommand(C_INC_ADDRESS)
-   print "Passed!"
+   print("Passed!")
    return True
 
 
@@ -435,14 +435,13 @@ def Pic12_ConfigCheck(pic_data, config_base):
 
 def Pic12_CheckLVP(pic_data, config_base):
   #specify config word2
-  l=8 
+  l=8
   if pic_data.get(l*2+ config_base) != None :
     if pic_data.get(l*2+ config_base+1) != None :
       Value = pic_data.get(l*2+ config_base) + ( 256 * pic_data.get(l*2+ config_base+1))
       Value = Value & 0x3fff
       return((Value & 0x2000)== 0x2000)
   return True
-   
 
 #============ MAIN ==============
 
@@ -452,7 +451,7 @@ if __name__ == '__main__':
   elif len(sys.argv) is 1:
     HexFile = ''
   else:
-    print 'Usage: %s file.hex' % sys.argv[0]
+    print('Usage: %s file.hex' % sys.argv[0])
     quit()
 
 
@@ -462,11 +461,11 @@ if len(HexFile) > 0 :
    try:
      FileData.loadhex(HexFile)
    except IOError:
-     print 'Error in file "', HexFile, '"'
+     print('Error in file "', HexFile, '"')
      quit()
 
-PicData = FileData.todict()       
-print 'File "', HexFile, '" loaded'
+PicData = FileData.todict()
+print('File "', HexFile, '" loaded')
 #set GPIO MODE
 
 GPIO.setwarnings(False)
@@ -503,80 +502,80 @@ DataBase    = 0x1e000
 ConfigBase  = 0x10000
 
 
-print "Cpu :", hex(CpuId), " :",
+print("Cpu :", hex(CpuId), " :",end='')
 if CpuId == PIC12F1840:
-   print "PIC12F1840",
+   print("PIC12F1840",end='')
    ProgramSize = 4096
-   DataSize    = 256 
+   DataSize    = 256
 elif CpuId == PIC16F1847:
-   print "PIC16F1847",
+   print("PIC16F1847",end='')
    ProgramSize = 8192
    DataSize    = 256
 elif CpuId == PIC16LF1847:
-   print "PIC16LF1847",
+   print("PIC16LF1847",end='')
    ProgramSize = 8192
    DataSize    = 256
 elif CpuId == PIC12LF1840:
-   print "PIC12LF1840",
+   print("PIC12LF1840",end='')
    ProgramSize = 4096
    DataSize    = 256
 elif CpuId == PIC16F1826:
-   print "PIC16F1826",
+   print("PIC16F1826",end='')
    ProgramSize = 2048
 elif CpuId == PIC16F1827:
-   print "PIC16F1827",
+   print("PIC16F1827",end='')
    ProgramSize = 4096
 elif CpuId == PIC16LF1826:
-   print "PIC16LF1826",
+   print("PIC16LF1826",end='')
    ProgramSize = 2048
 elif CpuId == PIC16LF1827:
-   print "PIC16LF1827",
+   print("PIC16LF1827",end='')
    ProgramSize = 4096
 elif CpuId == PIC16F1823:
-   print "PIC16F1823",
+   print("PIC16F1823",end='')
    ProgramSize = 2048
 elif CpuId == PIC16LF1823:
-   print "PIC16LF1823",
+   print("PIC16LF1823",end='')
    ProgramSize = 2048
 elif CpuId == PIC12F1822:
-   print "PIC16F1822",
+   print("PIC16F1822",end='')
    ProgramSize = 2048
 elif CpuId == PIC12LF1822:
-   print "PIC16LF1822",
+   print("PIC16LF1822",end='')
    ProgramSize = 2048
 elif CpuId == PIC16F1824:
-   print "PIC16F1824",
+   print("PIC16F1824",end='')
    ProgramSize = 4096
 elif CpuId == PIC16LF1824:
-   print "PIC16LF1824",
+   print("PIC16LF1824",end='')
    ProgramSize = 4096
 elif CpuId == PIC16F1825:
-   print "PIC16F1825",
+   print("PIC16F1825",end='')
    ProgramSize = 8192
 elif CpuId == PIC16LF1825:
-   print "PIC16LF1825",
+   print("PIC16LF1825",end='')
    ProgramSize = 8192
 elif CpuId == PIC16F1828:
-   print "PIC16F1828",
+   print("PIC16F1828",end='')
    ProgramSize = 4095
 elif CpuId == PIC16LF1828:
-   print "PIC16LF1828",
+   print("PIC16LF1828",end='')
    ProgramSize = 4095
 elif CpuId == PIC16F1829:
-   print "PIC16F1829",
+   print("PIC16F1829",end='')
    ProgramSize = 8192
 elif CpuId == PIC16LF1829:
-   print "PIC16LF1829",
-   ProgramSize = 8192   
+   print("PIC16LF1829",end='')
+   ProgramSize = 8192
 else:
-   print "Invalid"
+   print("Invalid")
 #   Release_VPP()
    Release_LVP()
    quit()
-print "Revision ", hex(CpuRevision)
+print("Revision ", hex(CpuRevision))
 
-print "ProgramSize =", hex(ProgramSize)
-print "DataSize    =", hex(DataSize)
+print("ProgramSize =", hex(ProgramSize))
+print("DataSize    =", hex(DataSize))
 
 
 #if(CpuId == PIC12F1840 or CpuId == PIC12LF1840 or CpuId == PIC16F1847 or CpuId == PIC16LF1847):
@@ -591,8 +590,8 @@ if ProgramSize > 0 :
               if Pic12_ConfigBurn(PicData,ConfigBase):
                 if Pic12_ConfigCheck(PicData,ConfigBase):
                   if not Pic12_CheckLVP(PicData,ConfigBase):
-                     print " *** Warning ***   LVP not set in Hex file. LVP was force!"
-                  print "No Error.   All Done!"
+                     print( " *** Warning ***   LVP not set in Hex file. LVP was force!")
+                  print( "No Error.   All Done!")
 
 #elif (cpuid == ???):
 # put other cpu type here
