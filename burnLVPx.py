@@ -85,10 +85,16 @@ AllCpuFamily = [pic12,pic18fxx2,pic18f2xxx,pic18fxxk80,pic18f2_4xk22,pic16f8x]
 #=============  main ==========
 
 
+def myDelay():
+    pass
+    pass
+    pass
+
+
 if __name__ == '__main__':
-  if len(sys.argv) is 2:
+  if len(sys.argv) == 2:
     HexFile = sys.argv[1]
-  elif len(sys.argv) is 1:
+  elif len(sys.argv) == 1:
     HexFile = ''
   else:
     print('Usage: %s file.hex' % sys.argv[0])
@@ -104,7 +110,7 @@ if len(HexFile) > 0 :
      print('Error in file "', HexFile, '"')
      quit()
 
-PicData = FileData.todict()       
+PicData = FileData.todict()
 print('File "', HexFile, '" loaded')
 
 
@@ -124,7 +130,7 @@ for l in AllCpuFamily:
     CpuF=l
     break;
   else:
-    l.Release_LVP() 
+    l.Release_LVP()
 
 if CpuTag == 0:
   print(" Unable to identify cpu type")

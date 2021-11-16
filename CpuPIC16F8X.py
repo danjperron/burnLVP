@@ -48,7 +48,7 @@ from time import sleep
 import sys, termios, atexit
 from intelhex import IntelHex
 from select import select
-
+from mydelay import mydelay
 
 class PIC16F8X:
 
@@ -122,9 +122,9 @@ class PIC16F8X:
     for loop in range(6):
       IO.GPIO.output(IO.PIC_CLK, True)
       IO.GPIO.output(IO.PIC_DATA, (Command & 1) ==1)
-      pass
+      mydelay()
       IO.GPIO.output(IO.PIC_CLK, False)
-      pass
+      mydelay()
       Command = Command >> 1;
 
 
@@ -133,11 +133,11 @@ class PIC16F8X:
     Value = 0
     for loop in range(16):
       IO.GPIO.output(IO.PIC_CLK, True)
-      pass
+      mydelay()
       if IO.GPIO.input(IO.PIC_DATA):
         Value =  Value + (1 << loop)
       IO.GPIO.output(IO.PIC_CLK, False)
-      pass
+      mydelay()
     Value = (Value >> 1) & 0x3FFF;
     return Value;
 
@@ -148,9 +148,9 @@ class PIC16F8X:
     for loop in range(16):
       IO.GPIO.output(IO.PIC_CLK, True)
       IO.GPIO.output(IO.PIC_DATA,(Value & 1)==1)
-      pass
+      mydelay()
       IO.GPIO.output(IO.PIC_CLK, False)
-      pass
+      mydelay()
       Value = Value >> 1;
 
   def BulkErase(self):
@@ -316,7 +316,7 @@ class PIC16F8X:
           Value = pic_data.get(l*2+ self.ConfigBase) + ( 256 * pic_data.get(l*2+ self.ConfigBase+1))
           Value = Value & 0x3fff
           self.SendCommand(self.C_LOAD_PROGRAM)
-          if l is 8:
+          if l == 8:
             #catch21 force LVP programming to be always ON
             Value = Value | 0x2000
           self.LoadWord(Value)
@@ -375,7 +375,7 @@ class PIC16F8X:
         if pic_data.get(l*2+ self.ConfigBase+1) != None :
           Value = pic_data.get(l*2+ self.ConfigBase) + ( 256 * pic_data.get(l*2+ self.ConfigBase+1))
           Value = Value & 0x3fff
-          if l is 8:
+          if l == 8:
             #catch21 force LVP programming to be always ON
             Value = Value | 0x2000
           self.SendCommand(self.C_READ_PROGRAM)
@@ -392,7 +392,7 @@ class PIC16F8X:
 
   def IDBurn(self, pic_data):
     #ID is with CONFIG
-    pass
+    mydelay()
 
   def IDCheck(self, pic_data):
     #id is with CONFIG

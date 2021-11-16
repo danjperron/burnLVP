@@ -50,8 +50,8 @@ from time import sleep
 import sys, termios, atexit
 from intelhex import IntelHex
 from select import select
-from  CpuPIC18F import PIC18F
-
+from CpuPIC18F import PIC18F
+from mydelay import mydelay
 class PIC18FXXK80(PIC18F):
 
   WriteBufferSize =64
@@ -289,16 +289,16 @@ class PIC18FXXK80(PIC18F):
   def WriteConfig(self):
     IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
     IO.GPIO.output(IO.PIC_DATA, False)
-    pass
+    mydelay()
     for loop in range(3):
        IO.GPIO.output(IO.PIC_CLK, True)
-       pass
+       mydelay()
        IO.GPIO.output(IO.PIC_CLK, False)
-       pass
+       mydelay()
     IO.GPIO.output(IO.PIC_CLK, True)
     sleep(0.01)
     IO.GPIO.output(IO.PIC_CLK, False)
-    pass
+    mydelay()
     self.LoadWord(0)
 
 
@@ -349,7 +349,7 @@ class PIC18FXXK80(PIC18F):
       if (l % 1024)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-    print(" ... Passed!")
+    print(" ... mydelay()ed!")
     return True
 
 

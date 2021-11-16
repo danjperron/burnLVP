@@ -368,7 +368,7 @@ def Pic12_ConfigBurn(pic_data, config_base):
           Value = pic_data.get(l*2+ config_base) + ( 256 * pic_data.get(l*2+ config_base+1))
           Value = Value & 0x3fff
           SendCommand(C_LOAD_PROGRAM)
-          if l is 8:
+          if l == 8:
             #catch21 force LVP programming to be always ON
             Value = Value | 0x2000
           LoadWord(Value)
@@ -415,7 +415,7 @@ def Pic12_ConfigCheck(pic_data, config_base):
         if pic_data.get(l*2+ config_base+1) != None :
           Value = pic_data.get(l*2+ config_base) + ( 256 * pic_data.get(l*2+ config_base+1))
           Value = Value & 0x3fff
-          if l is 8:
+          if l == 8:
             #catch21 force LVP programming to be always ON
             Value = Value | 0x2000
           SendCommand(C_READ_PROGRAM)
@@ -446,9 +446,9 @@ def Pic12_CheckLVP(pic_data, config_base):
 #============ MAIN ==============
 
 if __name__ == '__main__':
-  if len(sys.argv) is 2:
+  if len(sys.argv) == 2:
     HexFile = sys.argv[1]
-  elif len(sys.argv) is 1:
+  elif len(sys.argv) == 1:
     HexFile = ''
   else:
     print('Usage: %s file.hex' % sys.argv[0])

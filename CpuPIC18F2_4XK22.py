@@ -44,13 +44,14 @@ import burnGPIO as IO
 from time import sleep
 import sys, termios, atexit
 from intelhex import IntelHex
-from select import select   
+from select import select
 from  CpuPIC18F import PIC18F
+from mydelay import mydelay
 
 class PIC18F2_4XK22(PIC18F):
 
   EraseBufferSize = 64
-  
+
   #cpu List dict.  CpuId  [Name , Program Size, Data Size, Write buffer size]
   ListName = 0
   ListProgramSize = 1
@@ -142,7 +143,7 @@ class PIC18F2_4XK22(PIC18F):
     #create a buffer to hold program code
     WordCount = self.WriteBufferSize/2
     wbuffer = [0xffff] * WordCount
-    
+
     #ok load until all code is written
 
     for l in range(0,self.ProgramSize, self.WriteBufferSize):
@@ -156,20 +157,20 @@ class PIC18F2_4XK22(PIC18F):
       #if they are all blank just skip it
       if BlankFlag:
         continue
-      
+
       #ok let's write the buffer
       self.LoadMemoryAddress(l)
       for i in range(WordCount-1):
         self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2,wbuffer[i])
       self.LoadCommandWord(self.C_PIC18_START_PGM,wbuffer[WordCount-1])
-     
-      #and wait 
+
+      #and wait
       self.WriteAndWait()
       if (l % 1024) == 0:
         sys.stdout.write('.')
         sys.stdout.flush()
     #disable write
-    self.LoadCode(0x94A6) 
+    self.LoadCode(0x94A6)
     print("Done!")
 
 
@@ -191,7 +192,7 @@ class PIC18F2_4XK22(PIC18F):
       self.LoadCode(0x0E00 | Value)
       self.LoadCode(0x6EA8)
       #enable memory writes
-      self.LoadCode(0x84A6) 
+      self.LoadCode(0x84A6)
       #Initiate write
       self.LoadCode(0x82A6)
       self.LoadCode(0)
@@ -225,7 +226,7 @@ class PIC18F2_4XK22(PIC18F):
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+2))
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+4))
     self.LoadCommandWord(self.C_PIC18_START_PGM, self.SearchWordValue(pic_data,self.IDBase+6))
-    self.WriteConfig()   
+    self.WriteConfig()
     print(" ... Done!")
     return  
 
@@ -234,16 +235,16 @@ class PIC18F2_4XK22(PIC18F):
 
   def WriteConfig(self):
     IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT, initial=IO.GPIO.LOW)
-    pass
+    mydelay()
     for loop in range(3):
        IO.GPIO.output(IO.PIC_CLK, True)
-       pass
+       mydelay()
        IO.GPIO.output(IO.PIC_CLK, False)
-       pass
+       mydelay()
     IO.GPIO.output(IO.PIC_CLK, True)
     sleep(0.01)
     IO.GPIO.output(IO.PIC_CLK, False)
-    pass
+    mydelay()
     self.LoadWord(0)
 
 
@@ -294,7 +295,7 @@ class PIC18F2_4XK22(PIC18F):
       if (l % 1024)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-    print(" ... Passed!")
+    print(" ... mydelay()ed!")
     return True
 
 

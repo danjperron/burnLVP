@@ -639,9 +639,9 @@ def   ProgramBurnPic18(PicData,ProgramBase,ProgramSize):
 #=============  main ==========
 
 if __name__ == '__main__':
-  if len(sys.argv) is 2:
+  if len(sys.argv) == 2:
     HexFile = sys.argv[1]
-  elif len(sys.argv) is 1:
+  elif len(sys.argv) == 1:
     HexFile = ''
   else:
     print('Usage: %s file.hex' % sys.argv[0])

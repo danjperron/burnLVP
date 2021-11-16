@@ -5,7 +5,7 @@
 #  Class to program PIC18F2XXX and PIC18F4XXX family
 #
 #
-#  class PIC18F2XXX 
+#  class PIC18F2XXX
 #  inherit from class PIC18F
 #
 #
@@ -55,14 +55,15 @@ import burnGPIO
 from time import sleep
 import sys, termios, atexit
 from intelhex import IntelHex
-from select import select   
+from select import select
 from  CpuPIC18F import PIC18F
+from mydelay import mydelay
 
 class PIC18F2XXX(PIC18F):
 
   WriteBufferSize =8
   EraseBufferSize =64
-  #cpu List dict.  CpuId  [Name , IdMask, Revision Mask, Block Size, Block Count, Program Size, WriteBuffer]	
+  #cpu List dict.  CpuId  [Name , IdMask, Revision Mask, Block Size, Block Count, Program Size, WriteBuffer
 
   ListName = 0
   ListMask = 1
@@ -123,7 +124,7 @@ class PIC18F2XXX(PIC18F):
              }
 
   PicFamily = 'PIC18F2XXX'
- 
+
 
   def BulkErase(self):
     print("Bulk Erase ",end='')
@@ -151,11 +152,11 @@ class PIC18F2XXX(PIC18F):
     #create a buffer to hold program code
     WordCount = self.WriteBufferSize/2
     wbuffer = [0xffff] * WordCount
-    
+
     #ok load until all code is written
 
     for l in range(0,self.ProgramSize, self.WriteBufferSize):
-      
+
       BlankFlag= True
       #get all buffer and check if they are all blank
       for i in range(WordCount):
@@ -166,21 +167,21 @@ class PIC18F2XXX(PIC18F):
       #if they are all blank just skip it
       if BlankFlag:
         continue
-      
+
       #ok let's write the buffer
       self.LoadMemoryAddress(l)
       for i in range(WordCount-1):
         self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2,wbuffer[i])
       self.LoadCommandWord(self.C_PIC18_START_PGM,wbuffer[WordCount-1])
-     
-      #and wait 
+
+      #and wait
       self.WriteAndWait()
       if (l % 1024) == 0:
         sys.stdout.write('.')
         sys.stdout.flush()
     print("Done!")
 
-         
+
 
   def DataBlankCheck(self):
     print("EEPROM DATA[",self.DataSize,"] Blank Check ",end='')
@@ -198,7 +199,7 @@ class PIC18F2XXX(PIC18F):
       #Load data into the serial data
       self.LoadCode(0x50A8)
       self.LoadCode(0x6EF5)
-      self.LoadCode(0)  
+      self.LoadCode(0)
       self.LoadCommand(self.C_PIC18_TABLAT)
       RValue= self.ReadData()
       if RValue != 0xff :
@@ -234,7 +235,7 @@ class PIC18F2XXX(PIC18F):
     print("Done!")
     return True
 
-       
+
 
 
   def  DataBurn(self,pic_data):
@@ -255,7 +256,7 @@ class PIC18F2XXX(PIC18F):
       self.LoadCode(0x0e00 | Value)
       self.LoadCode(0x6EA8)
       #enable memory writes
-      self.LoadCode(0x84A6) 
+      self.LoadCode(0x84A6)
       #Initiate write
       self.LoadCode(0x82A6)
       #Poll WR bit until bit is clear
@@ -295,9 +296,9 @@ class PIC18F2XXX(PIC18F):
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+2))
     self.LoadCommandWord(self.C_PIC18_WRITE_INC_BY2, self.SearchWordValue(pic_data,self.IDBase+4))
     self.LoadCommandWord(self.C_PIC18_START_PGM, self.SearchWordValue(pic_data,self.IDBase+6))
-    self.WriteAndWait()   
+    self.WriteAndWait()
     print(" ... Done!")
-    return  
+    return
 
   ConfigMask = [0x3F, 0xCF, 0x3F, 0x1F, 0, 0x87, 0xfd,0, 0x3F, 0xc0, 0x3F, 0xE0, 0x3F, 0x40] 
   def ConfigBurn(self,pic_data):
@@ -328,7 +329,7 @@ class PIC18F2XXX(PIC18F):
     self.LoadCode(0x94A6)
     print(" ... Done!")
 
-  
+
   def ConfigCheck(self,pic_data):
     print("Config Check ",end='')
     self.LoadMemoryAddress(self.ConfigBase)
@@ -352,9 +353,9 @@ class PIC18F2XXX(PIC18F):
       if (l % 1024)==0 :
         sys.stdout.write('.')
         sys.stdout.flush()
-    print(" ... Passed!")
+    print(" ... mydelay()ed!")
     return True
- 
+
 
 
 
@@ -364,7 +365,7 @@ class PIC18F2XXX(PIC18F):
     #some cpu use bit 4 from revision for cpu identification
     for l in self.CpuList:
        _cpuInfo =self.CpuList.get(l)
-       #get IdMask from specific cpu 
+       #get IdMask from specific cpu
        _cpuID = _cpuInfo[self.ListMask] & Id
        if _cpuID == l:
          self.ProgramSize = _cpuInfo[self.ListProgramSize]
@@ -372,7 +373,7 @@ class PIC18F2XXX(PIC18F):
          self.CpuId = _cpuID
          self.CpuRevision = Id & _cpuInfo[self.ListRMask]
          self.WriteBufferSize = _cpuInfo[self.ListWriteBufferSize]
-         return _cpuInfo 
+         return _cpuInfo
     return  None
 
 

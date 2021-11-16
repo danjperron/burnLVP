@@ -2,7 +2,7 @@
 
 ################################
 #
-# CpuPIC1.py  
+# CpuPIC1.py
 #
 #
 # burnLVP Pic12 Class module
@@ -48,9 +48,13 @@ from time import sleep
 import sys, termios, atexit
 from intelhex import IntelHex
 from select import select
+from mydelay import mydelay
+
 
 
 class PIC12:
+
+
 
   CpuTag=0
   CpuId=0
@@ -59,11 +63,10 @@ class PIC12:
   ProgramSize = 2048
   ProgramBase = 0
 
-  DataSize    = 256    
+  DataSize    = 256
   DataBase    = 0x1e000
 
   ConfigBase  = 0x10000
-  
   PicFamily = "PIC12/16"
 
 
@@ -132,9 +135,9 @@ class PIC12:
     for loop in range(33):
       IO.GPIO.output(IO.PIC_CLK, True)
       IO.GPIO.output(IO.PIC_DATA, (magic & 1) == 1)
-      pass
+      mydelay()
       IO.GPIO.output(IO.PIC_CLK, False)
-      pass
+      mydelay()
       magic = magic >> 1
 
 
@@ -143,9 +146,9 @@ class PIC12:
     for loop in range(6):
       IO.GPIO.output(IO.PIC_CLK, True)
       IO.GPIO.output(IO.PIC_DATA, (Command & 1) ==1)
-      pass
+      mydelay()
       IO.GPIO.output(IO.PIC_CLK, False)
-      pass
+      mydelay()
       Command = Command >> 1;
 
 
@@ -154,24 +157,23 @@ class PIC12:
     Value = 0
     for loop in range(16):
       IO.GPIO.output(IO.PIC_CLK, True)
-      pass
+      mydelay()
       if IO.GPIO.input(IO.PIC_DATA):
         Value =  Value + (1 << loop)
       IO.GPIO.output(IO.PIC_CLK, False)
-      pass
+      mydelay()
     Value = (Value >> 1) & 0x3FFF;
     return Value;
-        
 
   def LoadWord(self,Value):
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)   
+    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
     Value = (Value << 1) & 0x7FFE
     for loop in range(16):
       IO.GPIO.output(IO.PIC_CLK, True)
       IO.GPIO.output(IO.PIC_DATA,(Value & 1)==1)
-      pass
+      mydelay()
       IO.GPIO.output(IO.PIC_CLK, False)
-      pass
+      mydelay()
       Value = Value >> 1;
 
 
@@ -346,7 +348,7 @@ class PIC12:
           Value = pic_data.get(l*2+ self.ConfigBase) + ( 256 * pic_data.get(l*2+ self.ConfigBase+1))
           Value = Value & 0x3fff
           self.SendCommand(self.C_LOAD_PROGRAM)
-          if l is 8:
+          if l == 8:
             #catch21 force LVP programming to be always ON
             Value = Value | 0x2000
           self.LoadWord(Value)
@@ -409,7 +411,7 @@ class PIC12:
         if pic_data.get(l*2+ self.ConfigBase+1) != None :
           Value = pic_data.get(l*2+ self.ConfigBase) + ( 256 * pic_data.get(l*2+ self.ConfigBase+1))
           Value = Value & 0x3fff
-          if l is 8:
+          if l == 8:
             #catch21 force LVP programming to be always ON
             Value = Value | 0x2000
           self.SendCommand(self.C_READ_PROGRAM)
@@ -426,12 +428,12 @@ class PIC12:
 
   def IDBurn(self, pic_data):
     #ID is with CONFIG
-    pass
+    mydelay()
 
   def IDCheck(self, pic_data):
     #id is with CONFIG
     return True
-   
+
 
 
   def ScanCpuTag(self):
