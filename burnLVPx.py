@@ -121,10 +121,11 @@ CpuId=0
 print("Scan CPU ")
 
 for l in AllCpuFamily:
-  CpuTag = l.ScanCpuTag()
-  if(CpuTag!=0):
+  CpuId = l.ScanCpuTag()
+  if(CpuId!=0):
     #found the correct cpu
     print("Cpu Id   =", hex(l.CpuId))
+    CpuId = l.CpuId
     print("Revision = ", hex(l.CpuRevision))
     #ok set the cpu family who find the cpu
     CpuF=l
@@ -132,7 +133,7 @@ for l in AllCpuFamily:
   else:
     l.Release_LVP()
 
-if CpuTag == 0:
+if CpuId == 0:
   print(" Unable to identify cpu type")
   quit()
 
@@ -140,7 +141,7 @@ if CpuTag == 0:
 
 CpuInfo=None
 for l in AllCpuFamily:
-  CpuInfo = l.FindCpu(CpuTag)
+  CpuInfo = l.FindCpu(CpuId)
   if CpuInfo != None:
     print("Found ", CpuInfo[0], "from Cpu Family ",l.PicFamily)
     print("Cpu Id:", hex(l.CpuId), " revision:", l.CpuRevision) 
@@ -152,10 +153,6 @@ if CpuInfo==None:
   print("Cpu Id:", hex(CpuTag & 0xFFE0))
   CpuF.Release_LVP()
   quit()
-
-
-
-
 
 #ok let's start to program
 #LVP mode should be okay since we found the cpu

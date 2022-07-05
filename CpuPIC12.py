@@ -74,7 +74,7 @@ class PIC12:
 
   #cpu list  dict.   CpuId [Pic Name, ProgramSize]
   CpuList =  {  0x1b80 : ['PIC12F1840'  , 4096] ,
-                0x1bc0 : ['PIC12LF1840' , 4096] , 
+                0x1bc0 : ['PIC12LF1840' , 4096] ,
                 0x1480 : ['PIC16F1847'  , 8192] ,
                 0x14A0 : ['PIC16LF1847' , 8192] ,
                 0x2780 : ['PIC16F1826'  , 2048] ,
@@ -92,12 +92,16 @@ class PIC12:
                 0x27C0 : ['PIC16F1828'  , 4096] ,
                 0x28C0 : ['PIC16LF1828' , 4096] ,
                 0x27E0 : ['PIC16F1829'  , 8192] ,
-                0x28E0 : ['PIC16LF1829' , 8192]
+                0x28E0 : ['PIC16LF1829' , 8192] ,
+                0x3051 : ['PIC12F1571'  , 1024] ,
+                0x3053 : ['PIC12LF1571' , 1024] ,
+                0x3050 : ['PIC12F1572'  , 2048] ,
+                0x3052 : ['PIC12LF1572' , 2048] ,
              }
 
   # command definition
   C_LOAD_CONFIG = 0
-  C_LOAD_PROGRAM = 2 
+  C_LOAD_PROGRAM = 2
   C_LOAD_DATA   =  3
   C_READ_PROGRAM = 4
   C_READ_DATA    = 5
@@ -116,7 +120,7 @@ class PIC12:
     sleep(0.1)
     #ok PIC_CLK=out& HIGH, PIC_DATA=out & LOW
     IO.GPIO.output(IO.PIC_CLK, False)
-    #MCLR LOW 
+    #MCLR LOW
     IO.GPIO.output(IO.PIC_DATA, False)
 #    print("LVP ON")
     IO.GPIO.output(IO.PIC_MCLR, False)
@@ -131,7 +135,7 @@ class PIC12:
 
   def SendMagic(self):
     magic = 0x4d434850
-    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)   
+    IO.GPIO.setup(IO.PIC_DATA, IO.GPIO.OUT)
     for loop in range(33):
       IO.GPIO.output(IO.PIC_CLK, True)
       IO.GPIO.output(IO.PIC_DATA, (magic & 1) == 1)
@@ -186,13 +190,17 @@ class PIC12:
     self.SendCommand(self.C_BULK_ERASE_PROGRAM)
     sleep(0.1)
     print(", Data.",end='')
-    self.SendCommand(self.C_BULK_ERASE_DATA)
-    sleep(0.1)
+    if self.DataSize != 0:
+    	self.SendCommand(self.C_BULK_ERASE_DATA)
+    	sleep(0.1)
     print(".... done.")
 
 
   def ProgramBlankCheck(self):
     print("Program blank check",end='')
+    if self.DataSize == 0:
+        print("--- skip ---")
+        return True
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.ProgramSize):
       self.SendCommand(self.C_READ_PROGRAM)
@@ -209,6 +217,9 @@ class PIC12:
 
   def DataBlankCheck(self):
     print("Data Blank check",end='')
+    if self.DataSize == 0:
+        print("--- skip ---")
+        return True
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.DataSize):
       self.SendCommand(self.C_READ_DATA)
@@ -295,6 +306,9 @@ class PIC12:
 
   def DataCheck(self,pic_data):
     print("Data check ",end='')
+    if self.DataSize == 0:
+        print("--- skip ---")
+        return True
     self.SendCommand(self.C_RESET_ADDRESS)
     for l in range(self.DataSize):
      if pic_data.get(l*2 + self.DataBase) != None :
@@ -442,26 +456,33 @@ class PIC12:
     self.SendMagic()
     self.SendCommand(0)
     self.LoadWord(0x3FFF)
-    for l in range(6):
+    for l in range(5):
       self.SendCommand(self.C_INC_ADDRESS)
+    self.SendCommand(self.C_READ_PROGRAM)
+    _tRevision=self.ReadWord()
+    self.SendCommand(self.C_INC_ADDRESS)
     self.SendCommand(self.C_READ_PROGRAM)
     self.CpuTag=self.ReadWord()
     self.CpuRevision = self.CpuTag & 0x1f
-    self.CpuId = self.CpuId & 0x3FE0
+    self.CpuId = self.CpuTag & 0x3FE0
     if ((self.CpuTag & 0x3FE0)  == 0x3FE0):
       self.CpuTag=0
-    return self.CpuTag
+    if ((self.CpuTag & 0x3FE0)  == 0x3040):
+      self.CpuId = self.CpuTag & 0x3fff
+      self.CpuRevision = _tRevision
+      self.DataSize=0
+    return self.CpuId
 
 
   ListName=0
   ListProgramSize=1
 
   def FindCpu(self, Id):
-    _cpuInfo = self.CpuList.get(Id & 0xFFE0)
+    _cpuInfo = self.CpuList.get(Id)
     if _cpuInfo != None:
       self.ProgramSize= _cpuInfo[self.ListProgramSize]
-      self.CpuId = Id & 0XFFE0
-      self.CpuRevision= Id & 0x1F  
+      #self.CpuId = Id & 0XFFE0
+      #self.CpuRevision= Id & 0x1F
     return _cpuInfo
 
 
